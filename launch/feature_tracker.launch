@@ -1,0 +1,13 @@
+
+<launch>
+    <arg name="config_path" default = "$(find feature_tracker_stereo)/../config/fpv/fpv_forward.yaml" />
+    <arg name="vins_folder" default = "$(find feature_tracker_stereo)/../config/fpv" />
+
+    <node name="feature_tracker_stereo" pkg="feature_tracker_stereo" type="feature_tracker_stereo" output="screen">
+        <param name="config_file" type="string" value="$(arg config_path)" />
+        <param name="vins_folder" type="string" value="$(arg vins_folder)" />
+    </node>
+
+    <include file="vins_rviz.launch"/>
+
+</launch>
