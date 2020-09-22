@@ -32,6 +32,20 @@ extrinsicTranslation: !!opencv-matrix
    dt: d
    data: [0.0011, 0.0217, -0.0001 ]
 
+Rrl: !!opencv-matrix
+   rows: 3
+   cols: 3
+   dt: d
+   data: [ 0.9998053, 0.01119774, 0.01624713,
+          -0.01114776, 0.99993286, -0.00316357, 
+          -0.01628147, 0.00298183, 0.999863,] 
+
+Trl: !!opencv-matrix
+   rows: 3
+   cols: 1
+   dt: d
+   data: [-0.07961594, 0.00074435, 0.00044255 ]
+
 #feature traker paprameters
 max_cnt: 250            # max feature number in feature tracking
 min_dist: 25            # min distance between two features

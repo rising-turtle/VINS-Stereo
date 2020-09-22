@@ -91,7 +91,8 @@ void FeatureTracker::addPoints()
     }
 }
 
-map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1)
+// map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1)
+void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1)
 {
     TicToc t_r;
     cur_time = _cur_time;
@@ -257,57 +258,58 @@ map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> FeatureTracker::trackIm
     for(size_t i = 0; i < cur_pts.size(); i++)
         prevLeftPtsMap[ids[i]] = cur_pts[i];
 
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
+    // map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;
 
     if(PUB_THIS_FRAME){
-        for (size_t i = 0; i < ids.size(); i++)
-        {
-            int feature_id = ids[i];
-            double x, y ,z;
-            x = cur_un_pts[i].x;
-            y = cur_un_pts[i].y;
-            z = 1;
-            double p_u, p_v;
-            p_u = cur_pts[i].x;
-            p_v = cur_pts[i].y;
-            int camera_id = 0;
-            double velocity_x, velocity_y;
-            velocity_x = pts_velocity[i].x;
-            velocity_y = pts_velocity[i].y;
+        // for (size_t i = 0; i < ids.size(); i++)
+        // {
+        //     int feature_id = ids[i];
+        //     double x, y ,z;
+        //     x = cur_un_pts[i].x;
+        //     y = cur_un_pts[i].y;
+        //     z = 1;
+        //     double p_u, p_v;
+        //     p_u = cur_pts[i].x;
+        //     p_v = cur_pts[i].y;
+        //     int camera_id = 0;
+        //     double velocity_x, velocity_y;
+        //     velocity_x = pts_velocity[i].x;
+        //     velocity_y = pts_velocity[i].y;
 
-            Eigen::Matrix<double, 7, 1> xyz_uv_velocity;
-            xyz_uv_velocity << x, y, z, p_u, p_v, velocity_x, velocity_y;
-            featureFrame[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
-            if(fabs(x) > 10000 || fabs(y) > 10000 || fabs(p_u) > 10000 || fabs(p_v) > 10000){
-                ROS_INFO("feature_id %d : [x y z u v vx vy] %f %f %f %f %f %f %f", x, y, z, p_u, p_v, velocity_x, velocity_y);
-            }
-        }
+        //     Eigen::Matrix<double, 7, 1> xyz_uv_velocity;
+        //     xyz_uv_velocity << x, y, z, p_u, p_v, velocity_x, velocity_y;
+        //     featureFrame[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
+        //     if(fabs(x) > 10000 || fabs(y) > 10000 || fabs(p_u) > 10000 || fabs(p_v) > 10000){
+        //         ROS_INFO("feature_id %d : [x y z u v vx vy] %f %f %f %f %f %f %f", x, y, z, p_u, p_v, velocity_x, velocity_y);
+        //     }
+        // }
 
-        if (!_img1.empty() && stereo_cam)
-        {
-            for (size_t i = 0; i < ids_right.size(); i++)
-            {
-                int feature_id = ids_right[i];
-                double x, y ,z;
-                x = cur_un_right_pts[i].x;
-                y = cur_un_right_pts[i].y;
-                z = 1;
-                double p_u, p_v;
-                p_u = cur_right_pts[i].x;
-                p_v = cur_right_pts[i].y;
-                int camera_id = 1;
-                double velocity_x, velocity_y;
-                velocity_x = right_pts_velocity[i].x;
-                velocity_y = right_pts_velocity[i].y;
+        // if (!_img1.empty() && stereo_cam)
+        // {
+        //     for (size_t i = 0; i < ids_right.size(); i++)
+        //     {
+        //         int feature_id = ids_right[i];
+        //         double x, y ,z;
+        //         x = cur_un_right_pts[i].x;
+        //         y = cur_un_right_pts[i].y;
+        //         z = 1;
+        //         double p_u, p_v;
+        //         p_u = cur_right_pts[i].x;
+        //         p_v = cur_right_pts[i].y;
+        //         int camera_id = 1;
+        //         double velocity_x, velocity_y;
+        //         velocity_x = right_pts_velocity[i].x;
+        //         velocity_y = right_pts_velocity[i].y;
 
-                Eigen::Matrix<double, 7, 1> xyz_uv_velocity;
-                xyz_uv_velocity << x, y, z, p_u, p_v, velocity_x, velocity_y;
-                featureFrame[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
-            }
-        }
+        //         Eigen::Matrix<double, 7, 1> xyz_uv_velocity;
+        //         xyz_uv_velocity << x, y, z, p_u, p_v, velocity_x, velocity_y;
+        //         featureFrame[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
+        //     }
+        // }
     }
     //printf("feature track whole time %f\n", t_r.toc());
-    return featureFrame;
+    // return featureFrame;
+    return ; 
 }
 
 

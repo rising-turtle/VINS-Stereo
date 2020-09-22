@@ -32,8 +32,8 @@ class FeatureTracker
 
     void readImage(const cv::Mat &_img,double _cur_time);
 
-
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1); 
+    // map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1); 
+    void trackImage(double _cur_time, const cv::Mat &_img, const cv::Mat &_img1); 
 
     void setMask();
 

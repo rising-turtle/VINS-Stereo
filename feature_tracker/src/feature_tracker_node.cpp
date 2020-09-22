@@ -95,9 +95,9 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
     }
 
     TicToc t_r;
-    map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;    
+    // map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> featureFrame;    
 
-    featureFrame = trackerData.trackImage(msg_timestamp, img1, img2); 
+    trackerData.trackImage(msg_timestamp, img1, img2); 
 
     if(SHOW_TRACK){
         cv::Mat imgTrack = trackerData.getTrackImage(); 
@@ -111,101 +111,70 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         pub_match.publish(imgTrackMsg);
     }
 
-    if(PUB_THIS_FRAME){
-        ROS_INFO("feature_tracker_node.cpp: TODO publish this frame");
+   if (PUB_THIS_FRAME)
+   {
+        pub_count++;
+        sensor_msgs::PointCloudPtr feature_points(new sensor_msgs::PointCloud);
+        sensor_msgs::ChannelFloat32 id_of_point;
+        sensor_msgs::ChannelFloat32 u_of_point;
+        sensor_msgs::ChannelFloat32 v_of_point;
+        sensor_msgs::ChannelFloat32 velocity_x_of_point;
+        sensor_msgs::ChannelFloat32 velocity_y_of_point;
+
+        feature_points->header.stamp = ros::Time(msg_timestamp); //  = img_msg->header;
+        feature_points->header.frame_id = "world";
+
+        // vector<set<int>> hash_ids(NUM_OF_CAM);
+        int camera_id = 0;
+        int feature_id; 
+        geometry_msgs::Point32 p;
+
+        // features on the left image 
+        for(size_t j=0; j < trackerData.ids.size(); j++){
+            feature_id = trackerData.ids[j];
+            p.x = trackerData.cur_un_pts[j].x;
+            p.y = trackerData.cur_un_pts[j].y;
+            p.z = 1;
+
+            feature_points->points.push_back(p); 
+            id_of_point.values.push_back(feature_id * NUM_OF_CAM + camera_id); 
+            u_of_point.values.push_back(trackerData.cur_pts[j].x);
+            v_of_point.values.push_back(trackerData.cur_pts[j].y);
+            velocity_x_of_point.values.push_back(trackerData.pts_velocity[j].x);
+            velocity_y_of_point.values.push_back(trackerData.pts_velocity[j].y);
+        }
+
+        // features on the right image 
+        camera_id = 1; 
+        for(size_t j=0; j < trackerData.ids_right.size(); j++){
+            feature_id = trackerData.ids_right[j];
+            p.x = trackerData.cur_un_right_pts[j].x;
+            p.y = trackerData.cur_un_right_pts[j].y;
+            p.z = 1;
+            feature_points->points.push_back(p); 
+            id_of_point.values.push_back(feature_id * NUM_OF_CAM + camera_id); 
+            u_of_point.values.push_back(trackerData.cur_right_pts[j].x);
+            v_of_point.values.push_back(trackerData.cur_right_pts[j].y);
+            velocity_x_of_point.values.push_back(trackerData.right_pts_velocity[j].x);
+            velocity_y_of_point.values.push_back(trackerData.right_pts_velocity[j].y);
+        }
+
+        feature_points->channels.push_back(id_of_point);
+        feature_points->channels.push_back(u_of_point);
+        feature_points->channels.push_back(v_of_point);
+        feature_points->channels.push_back(velocity_x_of_point);
+        feature_points->channels.push_back(velocity_y_of_point);
+        // ROS_INFO("publish %f, at %f with %d features ", feature_points->header.stamp.toSec(), ros::Time::now().toSec(),   feature_points->points.size());
+        // skip the first image; since no optical speed on frist image
+        if (!init_pub)
+        {
+            init_pub = 1;
+        }
+        else
+            pub_img.publish(feature_points);
+
     }
-
-   // if (PUB_THIS_FRAME)
-   // {
-   //      pub_count++;
-   //      sensor_msgs::PointCloudPtr feature_points(new sensor_msgs::PointCloud);
-   //      sensor_msgs::ChannelFloat32 id_of_point;
-   //      sensor_msgs::ChannelFloat32 u_of_point;
-   //      sensor_msgs::ChannelFloat32 v_of_point;
-   //      sensor_msgs::ChannelFloat32 velocity_x_of_point;
-   //      sensor_msgs::ChannelFloat32 velocity_y_of_point;
-
-   //      feature_points->header = img_msg->header;
-   //      feature_points->header.frame_id = "world";
-
-   //      vector<set<int>> hash_ids(NUM_OF_CAM);
-   //      for (int i = 0; i < NUM_OF_CAM; i++)
-   //      {
-   //          auto &un_pts = trackerData[i].cur_un_pts;
-   //          auto &cur_pts = trackerData[i].cur_pts;
-   //          auto &ids = trackerData[i].ids;
-   //          auto &pts_velocity = trackerData[i].pts_velocity;
-   //          for (unsigned int j = 0; j < ids.size(); j++)
-   //          {
-   //              if (trackerData[i].track_cnt[j] > 1)
-   //              {
-   //                  int p_id = ids[j];
-   //                  hash_ids[i].insert(p_id);
-   //                  geometry_msgs::Point32 p;
-   //                  p.x = un_pts[j].x;
-   //                  p.y = un_pts[j].y;
-   //                  p.z = 1;
-
-   //                  feature_points->points.push_back(p);
-   //                  id_of_point.values.push_back(p_id * NUM_OF_CAM + i);
-   //                  u_of_point.values.push_back(cur_pts[j].x);
-   //                  v_of_point.values.push_back(cur_pts[j].y);
-   //                  velocity_x_of_point.values.push_back(pts_velocity[j].x);
-   //                  velocity_y_of_point.values.push_back(pts_velocity[j].y);
-   //              }
-   //          }
-   //      }
-   //      feature_points->channels.push_back(id_of_point);
-   //      feature_points->channels.push_back(u_of_point);
-   //      feature_points->channels.push_back(v_of_point);
-   //      feature_points->channels.push_back(velocity_x_of_point);
-   //      feature_points->channels.push_back(velocity_y_of_point);
-   //      // ROS_INFO("publish %f, at %f with %d features ", feature_points->header.stamp.toSec(), ros::Time::now().toSec(),   feature_points->points.size());
-   //      // skip the first image; since no optical speed on frist image
-   //      if (!init_pub)
-   //      {
-   //          init_pub = 1;
-   //      }
-   //      else
-   //          pub_img.publish(feature_points);
-
-   //      if (SHOW_TRACK)
-   //      {
-   //          ptr = cv_bridge::cvtColor(ptr, sensor_msgs::image_encodings::BGR8);
-   //          //cv::Mat stereo_img(ROW * NUM_OF_CAM, COL, CV_8UC3);
-   //          cv::Mat stereo_img = ptr->image;
-
-   //          for (int i = 0; i < NUM_OF_CAM; i++)
-   //          {
-   //              cv::Mat tmp_img = stereo_img.rowRange(i * ROW, (i + 1) * ROW);
-   //              cv::cvtColor(show_img, tmp_img, CV_GRAY2RGB);
-
-   //              for (unsigned int j = 0; j < trackerData[i].cur_pts.size(); j++)
-   //              {
-   //                  double len = std::min(1.0, 1.0 * trackerData[i].track_cnt[j] / WINDOW_SIZE);
-   //                  cv::circle(tmp_img, trackerData[i].cur_pts[j], 2, cv::Scalar(255 * (1 - len), 0, 255 * len), 2);
-   //                  //draw speed line
-   //                  /*
-   //                  Vector2d tmp_cur_un_pts (trackerData[i].cur_un_pts[j].x, trackerData[i].cur_un_pts[j].y);
-   //                  Vector2d tmp_pts_velocity (trackerData[i].pts_velocity[j].x, trackerData[i].pts_velocity[j].y);
-   //                  Vector3d tmp_prev_un_pts;
-   //                  tmp_prev_un_pts.head(2) = tmp_cur_un_pts - 0.10 * tmp_pts_velocity;
-   //                  tmp_prev_un_pts.z() = 1;
-   //                  Vector2d tmp_prev_uv;
-   //                  trackerData[i].m_camera->spaceToPlane(tmp_prev_un_pts, tmp_prev_uv);
-   //                  cv::line(tmp_img, trackerData[i].cur_pts[j], cv::Point2f(tmp_prev_uv.x(), tmp_prev_uv.y()), cv::Scalar(255 , 0, 0), 1 , 8, 0);
-   //                  */
-   //                  //char name[10];
-   //                  //sprintf(name, "%d", trackerData[i].ids[j]);
-   //                  //cv::putText(tmp_img, name, trackerData[i].cur_pts[j], cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
-   //              }
-   //          }
-   //          //cv::imshow("vis", stereo_img);
-   //          //cv::waitKey(5);
-   //          pub_match.publish(ptr->toImageMsg());
-   //      }
-   //  }
-    // ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
+    ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
 }
 
 int main(int argc, char **argv)
