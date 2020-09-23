@@ -169,8 +169,8 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
                 // ouf << feature_id<<" right p1: "<<p.x<<" "<<p.y<<" "<<endl; 
             }
         }
-        cout <<" send feature_points after right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
-        ROS_WARN("has published %d feature points", pub_count); 
+        // cout <<" send feature_points after right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
+        // ROS_WARN("has published %d feature points", pub_count); 
         feature_points->channels.push_back(id_of_point);
         feature_points->channels.push_back(u_of_point);
         feature_points->channels.push_back(v_of_point);
@@ -185,7 +185,7 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         else
             pub_img.publish(feature_points);
     }
-    ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
+    // ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
 }
 
 int main(int argc, char **argv)

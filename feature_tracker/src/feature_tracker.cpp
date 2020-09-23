@@ -163,7 +163,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
         reduceVector(ids, status );
         reduceVector(track_cnt, status);
         // ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
-        printf("track cnt %d at %lf\n", (int)ids.size(), cur_time);
+        // printf("track cnt %d at %lf\n", (int)ids.size(), cur_time);
     }
 
     for (auto &n : track_cnt)
@@ -198,7 +198,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             ids.push_back(n_id++);
             track_cnt.push_back(1);
         }
-        printf("feature cnt after add %d\n", (int)ids.size());
+        // printf("feature cnt after add %d\n", (int)ids.size());
     }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
