@@ -237,10 +237,37 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
                 }
             }
 
-            ids_right = ids;
+            //fundamental matrix check 
+            
+                vector<cv::Point2f> un_l_pts, un_r_pts; 
+                un_l_pts.reserve(ids.size()); 
+                un_r_pts.reserve(ids.size()); 
+                for(int i=0; i<ids.size(); i++){
+                    if(status[i]){
+                        Eigen::Vector3d tmp_p;
+                        m_camera[0]->liftProjective(Eigen::Vector2d(cur_pts[i].x, cur_pts[i].y), tmp_p);
+                        tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
+                        tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
+                        un_l_pts.push_back(cv::Point2f(tmp_p.x(), tmp_p.y())); 
 
+                        m_camera[1]->liftProjective(Eigen::Vector2d(cur_right_pts[i].x, cur_right_pts[i].y), tmp_p);
+                        tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
+                        tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
+                        un_r_pts.push_back(cv::Point2f(tmp_p.x(), tmp_p.y()));
+                    }
+                }
+
+            ids_right = ids;
             reduceVector(cur_right_pts, status);
             reduceVector(ids_right, status);
+
+            assert(cur_right_pts.size() == un_l_pts.size()); 
+            vector<uchar> lr_fund_status; 
+            cv::findFundamentalMat(un_l_pts, un_r_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, lr_fund_status); 
+
+            reduceVector(cur_right_pts, lr_fund_status);
+            reduceVector(ids_right, lr_fund_status);
+
             // only keep left-right pts
             /*
             reduceVector(cur_pts, status);
@@ -250,7 +277,6 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             reduceVector(pts_velocity, status);
             */
             cur_un_right_pts = undistortedPts(cur_right_pts, m_camera[1]);
-
 
             right_pts_velocity = ptsVelocity(ids_right, cur_un_right_pts, cur_un_right_pts_map, prev_un_right_pts_map);
         }

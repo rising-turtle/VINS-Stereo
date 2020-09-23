@@ -282,58 +282,6 @@ VectorXd FeatureManager::getDepthVector()
     return dep_vec;
 }
 
-void FeatureManager::triangulateStereo(Vector3d Ps[], Vector3d tic[], Matrix3d ric[])
-{
-    for( auto &it_per_id : feature){
-        it_per_id.used_num = it_per_id.feature_per_frame.size(); 
-        if(!(it_per_id.used_num >= 2 && it_per_id.start_frame < WINDOW_SIZE - 2))
-            continue; 
-
-        if(it_per_id.estimated_depth > 0)
-            continue; 
-     
-
-        if(it_per_id.feature_per_frame[0].is_stereo){
-            double depth = it_per_id.feature_per_frame[0].getDepth(); 
-            if(depth > 0){
-                it_per_id.estimated_depth = depth; 
-                continue;             
-            }
-        }else{
-            Eigen::MatrixXd svd_A(2 * it_per_id.feature_per_frame.size(), 4);
-            int svd_idx = 0;
-            int imu_i = it_per_id.start_frame, imu_j = imu_i -1 ; 
-            Eigen::Matrix<double, 3, 4> P0;
-            Eigen::Vector3d t0 = Ps[imu_i] + Rs[imu_i] * tic[0];
-            Eigen::Matrix3d R0 = Rs[imu_i] * ric[0];
-            P0.leftCols<3>() = Eigen::Matrix3d::Identity();
-            P0.rightCols<1>() = Eigen::Vector3d::Zero();
-
-            for (auto &it_per_frame : it_per_id.feature_per_frame)
-            {
-                imu_j++;
-
-                Eigen::Vector3d t1 = Ps[imu_j] + Rs[imu_j] * tic[0];
-                Eigen::Matrix3d R1 = Rs[imu_j] * ric[0];
-                Eigen::Vector3d t = R0.transpose() * (t1 - t0);
-                Eigen::Matrix3d R = R0.transpose() * R1;
-                Eigen::Matrix<double, 3, 4> P;
-                P.leftCols<3>() = R.transpose();
-                P.rightCols<1>() = -R.transpose() * t;
-                Eigen::Vector3d f = it_per_frame.point.normalized();
-                svd_A.row(svd_idx++) = f[0] * P.row(2) - f[2] * P.row(0);
-                svd_A.row(svd_idx++) = f[1] * P.row(2) - f[2] * P.row(1);
-            }
-            ROS_ASSERT(svd_idx == svd_A.rows());
-            Eigen::Vector4d svd_V = Eigen::JacobiSVD<Eigen::MatrixXd>(svd_A, Eigen::ComputeThinV).matrixV().rightCols<1>();
-            double svd_method = svd_V[2] / svd_V[3];
-            it_per_id.estimated_depth = svd_method; 
-            if(it_per_id.estimated_depth <= 0.1)
-                it_per_id.estimated_depth = INIT_DEPTH; 
-        }
-    }
-}
-
 void FeatureManager::triangulate(Vector3d Ps[], Vector3d tic[], Matrix3d ric[])
 {
     for (auto &it_per_id : feature)
