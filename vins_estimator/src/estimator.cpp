@@ -464,6 +464,13 @@ bool Estimator::initialStructure()
         return false;
     }
 
+    // for(int i=0; i<sfm_f.size(); i++){
+    //     cout <<"sfm_f["<<i<<"]: position: "<<sfm_f[i].position[0]<<" "<<sfm_f[i].position[1]<<" "<<sfm_f[i].position[2]<<endl; 
+    //     for(int j=0; j<sfm_f[i].observation.size(); j++){
+    //         cout <<"sfm_f["<<i<<"]"<<" obs["<<j<<"]: "<<sfm_f[i].observation[j].second[0]<<" "<<sfm_f[i].observation[j].second[1]<<endl;
+    //     }
+    // }
+
     //solve pnp for all frame
     map<double, ImageFrame>::iterator frame_it;
     map<int, Vector3d>::iterator it;
@@ -491,14 +498,17 @@ bool Estimator::initialStructure()
         cv::eigen2cv(R_inital, tmp_r);
         cv::Rodrigues(tmp_r, rvec);
         cv::eigen2cv(P_inital, t);
-
         frame_it->second.is_key_frame = false;
         vector<cv::Point3f> pts_3_vector;
         vector<cv::Point2f> pts_2_vector;
+        vector<int> feat_idv;
         for (auto &id_pts : frame_it->second.points)
         {
             int feature_id = id_pts.first;
-            for (auto &i_p : id_pts.second)
+            // David Zhang, Sep. 23, this is the key step needs change for stereo case
+            // TODO: set the pnp between frames using stereo images, e.g. use id_pts.second[1]'s data
+            // for (auto &i_p : id_pts.second)
+            auto& i_p = id_pts.second[0];
             {
                 it = sfm_tracked_points.find(feature_id);
                 if(it != sfm_tracked_points.end())
@@ -509,6 +519,7 @@ bool Estimator::initialStructure()
                     Vector2d img_pts = i_p.second.head<2>();
                     cv::Point2f pts_2(img_pts(0), img_pts(1));
                     pts_2_vector.push_back(pts_2);
+                    feat_idv.push_back(feature_id); 
                 }
             }
         }
@@ -519,6 +530,15 @@ bool Estimator::initialStructure()
             ROS_DEBUG("Not enough points for solve pnp !");
             return false;
         }
+        // static bool once = true; 
+        // if(i==2 && once){
+        //     cout << "P_inital: " <<endl<< P_inital<<endl; 
+        //     ofstream ouf("frame2feat_stereo.txt"); 
+        //     for(int j=0; j<pts_3_vector.size(); j++)
+        //         ouf<<j<<" feat_id: "<<feat_idv[j]<<" "<<pts_3_vector[j].x<<" "<<pts_3_vector[j].y<<" "<<pts_3_vector[j].z<<" "<<pts_2_vector[j].x<<" "<<pts_2_vector[j].y<<endl;
+        //     once = false; 
+        // }
+
         if (! cv::solvePnP(pts_3_vector, pts_2_vector, K, D, rvec, t, 1))
         {
             ROS_DEBUG("solve pnp fail!");
@@ -535,6 +555,16 @@ bool Estimator::initialStructure()
 	      // cout<<"R_pnp: "<<endl<<R_pnp<<endl;
         frame_it->second.T = T_pnp;
     }
+    
+    // frame_it = all_image_frame.begin( );
+    // for (int i=0; frame_it != all_image_frame.end( ); frame_it++, i++){
+    //     if(frame_it->second.is_key_frame)
+    //         cout <<"keyframe "<<i<<" R: "<<endl<<frame_it->second.R<<endl<<" T: "<<frame_it->second.T.transpose()<<endl; 
+    //     else
+    //         cout <<"frame "<<i<<" R: "<<endl<<frame_it->second.R<<endl<<" T: "<<frame_it->second.T.transpose()<<endl; 
+    // }
+
+
     if (visualInitialAlign())
     // if (visualInitialAlignWithDepth())
         return true;
@@ -685,8 +715,8 @@ bool Estimator::visualInitialAlign()
         TIC_TMP[i].setZero();
     ric[0] = RIC[0];
     f_manager.setRic(ric);
-    // f_manager.triangulate(Ps, &(TIC_TMP[0]), &(RIC[0]));
-    f_manager.triangulateStereo(Ps, &(TIC_TMP[0]), &(RIC[0]));
+    f_manager.triangulate(Ps, &(TIC_TMP[0]), &(RIC[0]));
+    // f_manager.triangulateStereo(Ps, &(TIC_TMP[0]), &(RIC[0]));
 
     double s = (x.tail<1>())(0);
     for (int i = 0; i <= WINDOW_SIZE; i++)
@@ -790,6 +820,8 @@ bool Estimator::relativePose(Matrix3d &relative_R, Vector3d &relative_T, int &l)
                 l = i;
                 ROS_DEBUG("average_parallax %f choose l %d and newest frame to triangulate the whole structure", average_parallax * 460, l);
                 // ROS_INFO("estimator.cpp: corres has %d pairs", corres.size());
+                // cout<<"relative_R: "<<endl<<relative_R<<endl<<" relative_T: "<<relative_T.transpose()<<endl;
+
                 return true;
             }
         }
@@ -804,8 +836,8 @@ void Estimator::solveOdometry()
     if (solver_flag == NON_LINEAR)
     {
         TicToc t_tri;
-        // f_manager.triangulate(Ps, tic, ric);
-        f_manager.triangulateStereo(Ps, tic, ric);
+        f_manager.triangulate(Ps, tic, ric);
+        // f_manager.triangulateStereo(Ps, tic, ric);
         ROS_DEBUG("triangulation costs %f", t_tri.toc());
         optimization();
     }
@@ -1007,7 +1039,8 @@ void Estimator::optimization()
         problem.AddParameterBlock(para_Pose[i], SIZE_POSE, local_parameterization);
         problem.AddParameterBlock(para_SpeedBias[i], SIZE_SPEEDBIAS);
     }
-    for (int i = 0; i < NUM_OF_CAM; i++)
+    // for (int i = 0; i < NUM_OF_CAM; i++)
+    for (int i = 0; i < 1; i++)
     {
         ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
         problem.AddParameterBlock(para_Ex_Pose[i], SIZE_POSE, local_parameterization);
@@ -1140,8 +1173,8 @@ void Estimator::optimization()
     //options.num_threads = 2;
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
-    //options.use_explicit_schur_complement = true;
-    //options.minimizer_progress_to_stdout = true;
+    options.use_explicit_schur_complement = true;
+    // options.minimizer_progress_to_stdout = true;
     //options.use_nonmonotonic_steps = true;
     if (marginalization_flag == MARGIN_OLD)
         options.max_solver_time_in_seconds = SOLVER_TIME * 4.0 / 5.0;
@@ -1150,7 +1183,8 @@ void Estimator::optimization()
     TicToc t_solver;
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);
-    //cout << summary.BriefReport() << endl;
+    // cout<<" max_solver_time_in_seconds: "<< options.max_solver_time_in_seconds<<endl; 
+    // cout << summary.BriefReport() << endl;
     ROS_DEBUG("Iterations : %d", static_cast<int>(summary.iterations.size()));
     ROS_DEBUG("solver costs: %f", t_solver.toc());
 
@@ -1250,7 +1284,8 @@ void Estimator::optimization()
             addr_shift[reinterpret_cast<long>(para_Pose[i])] = para_Pose[i - 1];
             addr_shift[reinterpret_cast<long>(para_SpeedBias[i])] = para_SpeedBias[i - 1];
         }
-        for (int i = 0; i < NUM_OF_CAM; i++)
+        // for (int i = 0; i < NUM_OF_CAM; i++)
+        for (int i = 0; i < 1; i++)
             addr_shift[reinterpret_cast<long>(para_Ex_Pose[i])] = para_Ex_Pose[i];
         if (ESTIMATE_TD)
         {
@@ -1316,7 +1351,8 @@ void Estimator::optimization()
                     addr_shift[reinterpret_cast<long>(para_SpeedBias[i])] = para_SpeedBias[i];
                 }
             }
-            for (int i = 0; i < NUM_OF_CAM; i++)
+            // for (int i = 0; i < NUM_OF_CAM; i++)
+            for (int i = 0; i < 1; i++)
                 addr_shift[reinterpret_cast<long>(para_Ex_Pose[i])] = para_Ex_Pose[i];
             if (ESTIMATE_TD)
             {

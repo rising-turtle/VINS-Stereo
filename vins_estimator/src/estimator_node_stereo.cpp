@@ -326,8 +326,8 @@ void process()
                 // else
                     // ouf << feature_id<<" right p1: "<<x<<" "<<y<<endl;
             }
-            cout <<" receive all feature_points: "<<img_msg->points.size()<<" at "<<std::fixed<<img_msg->header.stamp.toSec()<<endl; 
-            cout <<" receive differnt id points: "<<image.size()<<" at "<<std::fixed<<img_msg->header.stamp.toSec()<<endl; 
+            // cout <<" receive all feature_points: "<<img_msg->points.size()<<" at "<<std::fixed<<img_msg->header.stamp.toSec()<<endl; 
+            // cout <<" receive differnt id points: "<<image.size()<<" at "<<std::fixed<<img_msg->header.stamp.toSec()<<endl; 
             estimator.processImage(image, img_msg->header);
 
             double whole_t = t_s.toc();
