@@ -9,9 +9,8 @@ Panels:
         - /VIO1/Path1
         - /VIO1/camera_visual1
         - /pose_graph1
-        - /pose_graph1/loop_visual1
-        - /pose_graph1/camera_visual1
-        - /pose_graph1/Marker1
+        - /pose_graph1/pose_graph_path1
+        - /pose_graph1/base_path1
       Splitter Ratio: 0.465115994
     Tree Height: 150
   - Class: rviz/Selection
@@ -122,7 +121,7 @@ Visualization Manager:
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
-          Color: 0; 255; 0
+          Color: 0; 170; 255
           Enabled: true
           Head Diameter: 0.300000012
           Head Length: 0.200000003
@@ -240,7 +239,7 @@ Visualization Manager:
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
-          Color: 0; 255; 0
+          Color: 255; 255; 127
           Enabled: true
           Head Diameter: 0.300000012
           Head Length: 0.200000003
@@ -437,8 +436,8 @@ Visualization Manager:
         - Alpha: 1
           Buffer Length: 1
           Class: rviz/Path
-          Color: 25; 255; 0
-          Enabled: true
+          Color: 85; 170; 255
+          Enabled: false
           Head Diameter: 0.300000012
           Head Length: 0.200000003
           Length: 0.300000012
@@ -456,7 +455,7 @@ Visualization Manager:
           Shaft Length: 0.100000001
           Topic: /pose_graph/no_loop_path
           Unreliable: false
-          Value: true
+          Value: false
       Enabled: true
       Name: pose_graph
   Enabled: true
@@ -482,7 +481,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 20.8551121
+      Distance: 29.9993858
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
@@ -497,10 +496,10 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 1.56979632
+      Pitch: 0.524796307
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 3.59722757
+      Yaw: 3.99222159
     Saved: ~
 Window Geometry:
   Displays:
@@ -518,8 +517,8 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1396
-  X: 2131
-  Y: 107
+  X: 2257
+  Y: 91
   loop_match_image:
     collapsed: false
   raw_image:

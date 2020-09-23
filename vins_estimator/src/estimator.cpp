@@ -289,13 +289,15 @@ bool Estimator::initialStructureStereo()
             imu_j++;
             Vector3d pts_j = it_per_frame.point;
             tmp_feature.observation.push_back(make_pair(imu_j, Eigen::Vector2d{pts_j.x(), pts_j.y()}));
+            tmp_feature.observation_depth.push_back(make_pair(imu_j, it_per_frame.getDepth())); 
         }
         sfm_f.push_back(tmp_feature);
     }
     Matrix3d relative_R;
     Vector3d relative_T;
     int l;
-    if (!relativePose(relative_R, relative_T, l))
+    // if (!relativePose(relative_R, relative_T, l))
+    if(!relativePoseHybrid(relative_R, relative_T, l))
     {
         ROS_INFO("Not enough features or parallax; Move device around");
         return false;
@@ -345,7 +347,8 @@ bool Estimator::initialStructureStereo()
         for (auto &id_pts : frame_it->second.points)
         {
             int feature_id = id_pts.first;
-            for (auto &i_p : id_pts.second)
+            // for (auto &i_p : id_pts.second)
+            auto& i_p = id_pts.second[0];
             {
                 it = sfm_tracked_points.find(feature_id);
                 if(it != sfm_tracked_points.end())
@@ -382,7 +385,8 @@ bool Estimator::initialStructureStereo()
           // cout<<"R_pnp: "<<endl<<R_pnp<<endl;
         frame_it->second.T = T_pnp;
     }
-    if (visualInitialAlign())
+    // if (visualInitialAlign())
+    if (visualInitialAlignWithDepth())
         return true;
     else
     {
@@ -609,8 +613,8 @@ bool Estimator::visualInitialAlignWithDepth()
         TIC_TMP[i].setZero();
     ric[0] = RIC[0];
     f_manager.setRic(ric);
-    //f_manager.triangulate(Ps, &(TIC_TMP[0]), &(RIC[0]));
-    f_manager.triangulateWithDepth(Ps, &(TIC_TMP[0]), &(RIC[0]));
+    f_manager.triangulate(Ps, &(TIC_TMP[0]), &(RIC[0]));
+    // f_manager.triangulateWithDepth(Ps, &(TIC_TMP[0]), &(RIC[0]));
 
 
     // do repropagate here

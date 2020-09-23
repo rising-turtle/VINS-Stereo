@@ -27,7 +27,7 @@ double FeaturePerFrame::getDepth()
     ((FeatureManager*)0)->triangulatePoint(leftPose, rightPose, point0, point1, point3d); 
 
     double depth = point3d.z(); 
-    if(depth <= 0.1){ // too small depth, not reliable 
+    if(depth <= 0.1 || depth >= 7){ // too small or too large depth, not reliable 
         // ROS_ERROR("feature_manager.cpp: what? depth: %lf", depth); 
         // cout<<"feature_id: "<< feat_id <<"point0: "<<point0.transpose()<<" point1: "<<point1.transpose()<<" point3d: "<<point3d.transpose()<<endl;
         is_stereo = false; 
@@ -430,7 +430,7 @@ void FeatureManager::triangulateWithDepth(Vector3d Ps[], Vector3d tic[], Matrix3
         {
             Eigen::Vector3d t0 = Ps[start_frame+i] + Rs[start_frame+i] * tic[0]; 
             Eigen::Matrix3d R0 = Rs[start_frame+i] * ric[0];
-            double depth_threshold = 15; //for handheld and wheeled application. Since d435i <3 is quiet acc
+            double depth_threshold = 7; //for handheld and wheeled application. Since d435i <3 is quiet acc
             //double depth_threshold = 10; //for tracked application, since IMU quite noisy in this scene             
             if (it_per_id.feature_per_frame[i].getDepth() < 0.1 || it_per_id.feature_per_frame[i].getDepth() >depth_threshold) 
                 continue;

@@ -54,7 +54,7 @@ F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
 equalize: 0             # if image is too dark or light, trun on equalize to find enough features
 fisheye: 1              # if using fisheye, trun on it. A circle mask will be loaded to remove edge noisy points
-flow_back: 0 #1            # if need double check by reverse optical flow 
+flow_back: 1 #1            # if need double check by reverse optical flow 
 
 #optimization parameters
 max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
