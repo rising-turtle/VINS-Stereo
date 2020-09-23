@@ -38,7 +38,7 @@ Rrl: !!opencv-matrix
    dt: d
    data: [ 0.9998053, 0.01119774, 0.01624713,
           -0.01114776, 0.99993286, -0.00316357, 
-          -0.01628147, 0.00298183, 0.999863,] 
+          -0.01628147, 0.00298183, 0.999863] 
 
 Trl: !!opencv-matrix
    rows: 3
@@ -54,7 +54,7 @@ F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
 equalize: 0             # if image is too dark or light, trun on equalize to find enough features
 fisheye: 1              # if using fisheye, trun on it. A circle mask will be loaded to remove edge noisy points
-flow_back: 1            # if need double check by reverse optical flow 
+flow_back: 0 #1            # if need double check by reverse optical flow 
 
 #optimization parameters
 max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time
@@ -69,7 +69,7 @@ gyr_w: 0.00004 #2.0e-5       # gyroscope bias random work noise standard deviati
 g_norm: 9.80766     # gravity magnitude
 
 #loop closure parameters
-loop_closure: 1                    # start loop closure
+loop_closure: 0 #1                    # start loop closure
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
 fast_relocalization: 1             # useful in real-time and large project
 pose_graph_save_path: "/home/tony-ws1/output/pose_graph/" # save and load path

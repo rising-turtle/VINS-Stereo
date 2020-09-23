@@ -96,7 +96,6 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
 {
     TicToc t_r;
     cur_time = _cur_time;
-    cur_img = _img;
     int row = cur_img.rows;
     int col = cur_img.cols;
     cv::Mat rightImg = _img1;
@@ -108,6 +107,11 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             clahe->apply(rightImg, rightImg);
     }
     */
+    if(cur_img.empty()){
+        prev_img = cur_img = _img; 
+    }else{
+        cur_img = _img; 
+    }
     cur_pts.clear();
 
     if (prev_pts.size() > 0)
@@ -159,7 +163,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
         reduceVector(ids, status );
         reduceVector(track_cnt, status);
         // ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
-        //printf("track cnt %d\n", (int)ids.size());
+        printf("track cnt %d at %lf\n", (int)ids.size(), cur_time);
     }
 
     for (auto &n : track_cnt)
@@ -167,7 +171,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
 
     if (PUB_THIS_FRAME)
     {
-        //rejectWithF();
+        rejectWithF();
         // ROS_DEBUG("set mask begins");
         TicToc t_m;
         setMask();
@@ -194,7 +198,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             ids.push_back(n_id++);
             track_cnt.push_back(1);
         }
-        //printf("feature cnt after add %d\n", (int)ids.size());
+        printf("feature cnt after add %d\n", (int)ids.size());
     }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
@@ -221,14 +225,20 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
                 cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err, cv::Size(21, 21), 3);
                 for(size_t i = 0; i < status.size(); i++)
                 {
-                    if(status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) && distance(cur_pts[i], reverseLeftPts[i]) <= 0.5)
+                    if(status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) && distance(cur_pts[i], reverseLeftPts[i]) <= 0.5){
                         status[i] = 1;
+                        
+                        // remove wrong z data 
+                        // if(cur_pts[i].x - cur_right_pts[i].x < 0)
+                            // status[i] = 0;
+                    }
                     else
                         status[i] = 0;
                 }
             }
 
             ids_right = ids;
+
             reduceVector(cur_right_pts, status);
             reduceVector(ids_right, status);
             // only keep left-right pts
@@ -240,6 +250,8 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             reduceVector(pts_velocity, status);
             */
             cur_un_right_pts = undistortedPts(cur_right_pts, m_camera[1]);
+
+
             right_pts_velocity = ptsVelocity(ids_right, cur_un_right_pts, cur_un_right_pts_map, prev_un_right_pts_map);
         }
         prev_un_right_pts_map = cur_un_right_pts_map;
@@ -515,6 +527,41 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
 
 void FeatureTracker::rejectWithF()
 {
+     if (cur_pts.size() >= 8)
+    {
+        // ROS_DEBUG("FM ransac begins");
+        TicToc t_f;
+        vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_prev_pts(prev_pts.size());
+        for (unsigned int i = 0; i < cur_pts.size(); i++)
+        {
+            Eigen::Vector3d tmp_p;
+            m_camera[0]->liftProjective(Eigen::Vector2d(cur_pts[i].x, cur_pts[i].y), tmp_p);
+            tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
+            tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
+            un_cur_pts[i] = cv::Point2f(tmp_p.x(), tmp_p.y());
+
+            m_camera[0]->liftProjective(Eigen::Vector2d(prev_pts[i].x, prev_pts[i].y), tmp_p);
+            tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
+            tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
+            un_prev_pts[i] = cv::Point2f(tmp_p.x(), tmp_p.y());
+        }
+
+        vector<uchar> status;
+        cv::findFundamentalMat(un_cur_pts, un_prev_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
+        int size_a = cur_pts.size();
+        reduceVector(prev_pts, status);
+        reduceVector(cur_pts, status);
+        reduceVector(cur_un_pts, status);
+        reduceVector(ids, status);
+        reduceVector(track_cnt, status);
+        // ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
+        // ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
+    }
+}
+
+/*
+void FeatureTracker::rejectWithF()
+{
     if (forw_pts.size() >= 8)
     {
         ROS_DEBUG("FM ransac begins");
@@ -546,7 +593,7 @@ void FeatureTracker::rejectWithF()
         ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, forw_pts.size(), 1.0 * forw_pts.size() / size_a);
         ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
     }
-}
+}*/
 
 bool FeatureTracker::updateID(unsigned int i)
 {

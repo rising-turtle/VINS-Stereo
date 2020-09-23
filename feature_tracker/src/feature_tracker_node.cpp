@@ -50,6 +50,7 @@ void img_callback2(const sensor_msgs::ImageConstPtr &img_msg){
 // void img_callback(const sensor_msgs::ImageConstPtr &img_msg)
 void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
 {
+    // ROS_WARN("received img_msg timestamp: %lf", msg_timestamp);
     if(first_image_flag)
     {
         first_image_flag = false;
@@ -75,7 +76,7 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
     // if (round(1.0 * pub_count / (img_msg->header.stamp.toSec() - first_image_time)) <= FREQ)
     if (round(1.0 * pub_count / (msg_timestamp - first_image_time)) <= FREQ)
     {
-       // ROS_INFO("feature_node: first_image_time: %lf current_time: %lf now publish", first_image_time, img_msg->header.stamp.toSec());
+       // ROS_INFO("feature_node: first_image_time: %lf current_time: %lf now publish", first_image_time, msg_timestamp);
         PUB_THIS_FRAME = true;
         // reset the frequency control
         // if (abs(1.0 * pub_count / (img_msg->header.stamp.toSec() - first_image_time) - FREQ) < 0.01 * FREQ)
@@ -113,6 +114,7 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
 
    if (PUB_THIS_FRAME)
    {
+        // ofstream ouf("feature_sent.txt");
         pub_count++;
         sensor_msgs::PointCloudPtr feature_points(new sensor_msgs::PointCloud);
         sensor_msgs::ChannelFloat32 id_of_point;
@@ -130,35 +132,45 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         geometry_msgs::Point32 p;
 
         // features on the left image 
+        set<int> hash_ids; 
         for(size_t j=0; j < trackerData.ids.size(); j++){
-            feature_id = trackerData.ids[j];
-            p.x = trackerData.cur_un_pts[j].x;
-            p.y = trackerData.cur_un_pts[j].y;
-            p.z = 1;
+            if(trackerData.track_cnt[j] > 1){
+                feature_id = trackerData.ids[j];
+                p.x = trackerData.cur_un_pts[j].x;
+                p.y = trackerData.cur_un_pts[j].y;
+                p.z = 1;
 
-            feature_points->points.push_back(p); 
-            id_of_point.values.push_back(feature_id * NUM_OF_CAM + camera_id); 
-            u_of_point.values.push_back(trackerData.cur_pts[j].x);
-            v_of_point.values.push_back(trackerData.cur_pts[j].y);
-            velocity_x_of_point.values.push_back(trackerData.pts_velocity[j].x);
-            velocity_y_of_point.values.push_back(trackerData.pts_velocity[j].y);
+                hash_ids.insert(feature_id); 
+                feature_points->points.push_back(p); 
+                id_of_point.values.push_back(feature_id * NUM_OF_CAM + camera_id); 
+                u_of_point.values.push_back(trackerData.cur_pts[j].x);
+                v_of_point.values.push_back(trackerData.cur_pts[j].y);
+                velocity_x_of_point.values.push_back(trackerData.pts_velocity[j].x);
+                velocity_y_of_point.values.push_back(trackerData.pts_velocity[j].y);
+            }
+            // ouf << feature_id<<" p0: "<<p.x<<" "<<p.y<<" "<<endl; 
         }
+        // cout <<" send feature_points before right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
 
         // features on the right image 
         camera_id = 1; 
         for(size_t j=0; j < trackerData.ids_right.size(); j++){
             feature_id = trackerData.ids_right[j];
-            p.x = trackerData.cur_un_right_pts[j].x;
-            p.y = trackerData.cur_un_right_pts[j].y;
-            p.z = 1;
-            feature_points->points.push_back(p); 
-            id_of_point.values.push_back(feature_id * NUM_OF_CAM + camera_id); 
-            u_of_point.values.push_back(trackerData.cur_right_pts[j].x);
-            v_of_point.values.push_back(trackerData.cur_right_pts[j].y);
-            velocity_x_of_point.values.push_back(trackerData.right_pts_velocity[j].x);
-            velocity_y_of_point.values.push_back(trackerData.right_pts_velocity[j].y);
+            if(hash_ids.find(feature_id) != hash_ids.end()){
+                p.x = trackerData.cur_un_right_pts[j].x;
+                p.y = trackerData.cur_un_right_pts[j].y;
+                p.z = 1;
+                feature_points->points.push_back(p); 
+                id_of_point.values.push_back(feature_id * NUM_OF_CAM + camera_id); 
+                u_of_point.values.push_back(trackerData.cur_right_pts[j].x);
+                v_of_point.values.push_back(trackerData.cur_right_pts[j].y);
+                velocity_x_of_point.values.push_back(trackerData.right_pts_velocity[j].x);
+                velocity_y_of_point.values.push_back(trackerData.right_pts_velocity[j].y);
+                // ouf << feature_id<<" right p1: "<<p.x<<" "<<p.y<<" "<<endl; 
+            }
         }
-
+        cout <<" send feature_points after right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
+        ROS_WARN("has published %d feature points", pub_count); 
         feature_points->channels.push_back(id_of_point);
         feature_points->channels.push_back(u_of_point);
         feature_points->channels.push_back(v_of_point);
@@ -172,7 +184,6 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         }
         else
             pub_img.publish(feature_points);
-
     }
     ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
 }

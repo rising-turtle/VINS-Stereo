@@ -1,13 +1,13 @@
 <launch>
-    <arg name="config_path" default = "$(find feature_tracker)/../config/fpv/fpv_forward.yaml" />
-	  <arg name="vins_path" default = "$(find feature_tracker)/../config/fpv" />
+    <arg name="config_path" default = "$(find feature_tracker_stereo)/../config/fpv/fpv_forward.yaml" />
+	  <arg name="vins_path" default = "$(find feature_tracker_stereo)/../config/fpv" />
 
-    <node name="feature_tracker" pkg="feature_tracker" type="feature_tracker" output="log">
+    <node name="feature_tracker_stereo" pkg="feature_tracker_stereo" type="feature_tracker_stereo" output="screen">
         <param name="config_file" type="string" value="$(arg config_path)" />
         <param name="vins_folder" type="string" value="$(arg vins_path)" />
     </node>
 
-    <node name="vins_estimator" pkg="vins_estimator" type="vins_estimator" output="screen">
+    <node name="vins_estimator_stereo" pkg="vins_estimator_stereo" type="vins_estimator_stereo" output="screen">
        <param name="use_sampson_model" type="bool" value="false"/>
        <param name="config_file" type="string" value="$(arg config_path)" />
        <param name="vins_folder" type="string" value="$(arg vins_path)" />

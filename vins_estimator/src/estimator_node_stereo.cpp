@@ -301,6 +301,8 @@ void process()
 
             ROS_DEBUG("processing vision data with stamp %f \n", img_msg->header.stamp.toSec());
 
+            // ofstream ouf("feature_received.txt"); 
+
             TicToc t_s;
             map<int, vector<pair<int, Eigen::Matrix<double, 7, 1>>>> image;
             for (unsigned int i = 0; i < img_msg->points.size(); i++)
@@ -319,7 +321,13 @@ void process()
                 Eigen::Matrix<double, 7, 1> xyz_uv_velocity;
                 xyz_uv_velocity << x, y, z, p_u, p_v, velocity_x, velocity_y;
                 image[feature_id].emplace_back(camera_id,  xyz_uv_velocity);
+                // if(camera_id == 0)
+                    // ouf<<feature_id<<" p0: "<<x<<" "<<y<<endl; 
+                // else
+                    // ouf << feature_id<<" right p1: "<<x<<" "<<y<<endl;
             }
+            cout <<" receive all feature_points: "<<img_msg->points.size()<<" at "<<std::fixed<<img_msg->header.stamp.toSec()<<endl; 
+            cout <<" receive differnt id points: "<<image.size()<<" at "<<std::fixed<<img_msg->header.stamp.toSec()<<endl; 
             estimator.processImage(image, img_msg->header);
 
             double whole_t = t_s.toc();
@@ -349,9 +357,9 @@ void process()
 
 int main(int argc, char **argv)
 {
-    ros::init(argc, argv, "vins_estimator");
+    ros::init(argc, argv, "vins_estimator_stereo");
     ros::NodeHandle n("~");
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // Info
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug); // Info
     readParameters(n);
     estimator.setParameter();
 #ifdef EIGEN_DONT_PARALLELIZE
@@ -362,8 +370,8 @@ int main(int argc, char **argv)
     registerPub(n);
 
     ros::Subscriber sub_imu = n.subscribe(IMU_TOPIC, 2000, imu_callback, ros::TransportHints().tcpNoDelay());
-    ros::Subscriber sub_image = n.subscribe("/feature_tracker/feature", 2000, feature_callback);
-    ros::Subscriber sub_restart = n.subscribe("/feature_tracker/restart", 2000, restart_callback);
+    ros::Subscriber sub_image = n.subscribe("/feature_tracker_stereo/feature", 2000, feature_callback);
+    ros::Subscriber sub_restart = n.subscribe("/feature_tracker_stereo/restart", 2000, restart_callback);
     ros::Subscriber sub_relo_points = n.subscribe("/pose_graph/match_points", 2000, relocalization_callback);
 
     std::thread measurement_process{process};

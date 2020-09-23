@@ -14,6 +14,8 @@ std::vector<Eigen::Vector3d> TIC;
 
 Eigen::Matrix3d Rrl; 
 Eigen::Vector3d Trl;
+Eigen::Matrix3d Rlr; 
+Eigen::Vector3d Tlr;
 
 Eigen::Vector3d G{0.0, 0.0, 9.8};
 
@@ -133,12 +135,14 @@ void readParameters(ros::NodeHandle &n)
         cv::cv2eigen(cv_R, Rrl); 
         cv::cv2eigen(cv_T, Trl); 
         Eigen::Quaterniond qq(Rrl); 
-        Rrl = qq.normalized(); 
+        Rrl = qq.normalized();
+        Rlr = Rrl.transpose(); 
+        Tlr = - Rlr * Trl;  
         ROS_INFO_STREAM("Rrl: " << std::endl << Rrl); 
         ROS_INFO_STREAM("Trl: " << std::endl << Trl.transpose());  
     }
 
-    INIT_DEPTH = 5.0;
+    INIT_DEPTH = 15.0;
     BIAS_ACC_THRESHOLD = 0.1;
     BIAS_GYR_THRESHOLD = 0.1;
 

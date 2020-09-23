@@ -66,6 +66,7 @@ class FeaturePerFrame
     double dep_gradient;
     bool is_stereo; 
     double dpt; 
+    int feat_id; 
 };
 
 class FeaturePerId
@@ -115,6 +116,7 @@ class FeatureManager
     void clearDepth(const VectorXd &x);
     VectorXd getDepthVector();
     void triangulate(Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);
+    void triangulateStereo(Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);
     void triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen::Matrix<double, 3, 4> &Pose1,
                             Eigen::Vector2d &point0, Eigen::Vector2d &point1, Eigen::Vector3d &point_3d);
     void triangulateWithDepth(Vector3d Ps[], Vector3d tic[], Matrix3d ric[]);

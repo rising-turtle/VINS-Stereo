@@ -337,12 +337,23 @@ bool LinearAlignmentWithDepth(map<double, ImageFrame> &all_image_frame, Vector3d
 }
 
 
-bool VisualIMUAlignment(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs, Vector3d &g, VectorXd &x)
+bool VisualIMUAlignmentWithDepth(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs, Vector3d &g, VectorXd &x)
 {
     solveGyroscopeBias(all_image_frame, Bgs);
 
     // if(LinearAlignment(all_image_frame, g, x))
     if(LinearAlignmentWithDepth(all_image_frame, g, x))
+        return true;
+    else
+        return false;
+}
+
+bool VisualIMUAlignment(map<double, ImageFrame> &all_image_frame, Vector3d* Bgs, Vector3d &g, VectorXd &x)
+{
+    solveGyroscopeBias(all_image_frame, Bgs);
+
+    if(LinearAlignment(all_image_frame, g, x))
+    // if(LinearAlignmentWithDepth(all_image_frame, g, x))
         return true;
     else
         return false;

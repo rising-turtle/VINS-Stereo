@@ -447,8 +447,8 @@ bool Estimator::initialStructure()
     Matrix3d relative_R;
     Vector3d relative_T;
     int l;
-    // if (!relativePose(relative_R, relative_T, l))
-    if (!relativePoseHybrid(relative_R, relative_T, l))
+    if (!relativePose(relative_R, relative_T, l))
+    // if (!relativePoseHybrid(relative_R, relative_T, l))
     {
         ROS_INFO("Not enough features or parallax; Move device around");
         return false;
@@ -535,8 +535,8 @@ bool Estimator::initialStructure()
 	      // cout<<"R_pnp: "<<endl<<R_pnp<<endl;
         frame_it->second.T = T_pnp;
     }
-    // if (visualInitialAlign())
-    if (visualInitialAlignWithDepth())
+    if (visualInitialAlign())
+    // if (visualInitialAlignWithDepth())
         return true;
     else
     {
@@ -551,7 +551,7 @@ bool Estimator::visualInitialAlignWithDepth()
     TicToc t_g;
     VectorXd x;
     //solve scale
-    bool result = VisualIMUAlignment(all_image_frame, Bgs, g, x);
+    bool result = VisualIMUAlignmentWithDepth(all_image_frame, Bgs, g, x);
     if(!result)
     {
         ROS_ERROR("dvio_init.cpp: solve g failed!");
@@ -685,7 +685,8 @@ bool Estimator::visualInitialAlign()
         TIC_TMP[i].setZero();
     ric[0] = RIC[0];
     f_manager.setRic(ric);
-    f_manager.triangulate(Ps, &(TIC_TMP[0]), &(RIC[0]));
+    // f_manager.triangulate(Ps, &(TIC_TMP[0]), &(RIC[0]));
+    f_manager.triangulateStereo(Ps, &(TIC_TMP[0]), &(RIC[0]));
 
     double s = (x.tail<1>())(0);
     for (int i = 0; i <= WINDOW_SIZE; i++)
@@ -803,7 +804,8 @@ void Estimator::solveOdometry()
     if (solver_flag == NON_LINEAR)
     {
         TicToc t_tri;
-        f_manager.triangulate(Ps, tic, ric);
+        // f_manager.triangulate(Ps, tic, ric);
+        f_manager.triangulateStereo(Ps, tic, ric);
         ROS_DEBUG("triangulation costs %f", t_tri.toc());
         optimization();
     }

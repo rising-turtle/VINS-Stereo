@@ -12,7 +12,7 @@
 
 const double FOCAL_LENGTH = 460.0;
 const int WINDOW_SIZE = 10;
-const int NUM_OF_CAM = 1;
+const int NUM_OF_CAM = 2; // this is two cams
 const int NUM_OF_F = 1000;
 //#define UNIT_SPHERE_ERROR
 
@@ -25,8 +25,8 @@ extern double GYR_N, GYR_W;
 
 extern std::vector<Eigen::Matrix3d> RIC; // Tic 
 extern std::vector<Eigen::Vector3d> TIC;
-// extern Eigen::Matrix3d Rlr;     // Tlr 
-// extern Eigen::Vector3d Tlr; 
+extern Eigen::Matrix3d Rlr;     // Tlr 
+extern Eigen::Vector3d Tlr; 
 extern Eigen::Matrix3d Rrl;     // Trl 
 extern Eigen::Vector3d Trl; 
 extern Eigen::Vector3d G;
