@@ -18,6 +18,9 @@
 #include "factor/projection_td_factor.h"
 #include "factor/marginalization_factor.h"
 #include "factor/sampson_factor.h"
+#include "factor/projectionOneFrameTwoCamFactor.h"
+#include "factor/projectionTwoFrameOneCamFactor.h"
+#include "factor/projectionTwoFrameTwoCamFactor.h"
 
 #include <unordered_map>
 #include <queue>
@@ -49,6 +52,8 @@ class Estimator
     void slideWindowNew();
     void slideWindowOld();
     void optimization();
+    void optimizationStereo();
+    void optimizationStereoWithCorrection();
     void vector2double();
     void double2vector();
     bool failureDetection();

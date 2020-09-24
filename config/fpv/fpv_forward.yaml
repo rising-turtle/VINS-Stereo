@@ -46,6 +46,15 @@ Trl: !!opencv-matrix
    dt: d
    data: [-0.07961594, 0.00074435, 0.00044255 ]
 
+body_T_cam1: !!opencv-matrix # Timu2c_2, Tc1_2_c2 is a virtual transformation [I,t] t = [0.1, 0, 0], note "mbf" in estimator_dpt.cpp
+   rows: 4
+   cols: 4
+   dt: d
+   data: [-0.01182306, 0.01155299, 0.99986336, -0.00029,
+      -0.99987014,  0.01081377, -0.01194809,  -0.0579069465,
+      -0.01095033 , -0.99987479,  0.01142364, -0.0001919,
+      0,                   0,                   0,   1.0]
+
 #feature traker paprameters
 max_cnt: 250            # max feature number in feature tracking
 min_dist: 25            # min distance between two features

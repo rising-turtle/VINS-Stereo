@@ -28,6 +28,7 @@ class FeaturePerFrame
         point.x() = _point(0);
         point.y() = _point(1);
         point.z() = _point(2);
+        ori_point = point; 
         uv.x() = _point(3);
         uv.y() = _point(4);
         velocity.x() = _point(5); 
@@ -41,21 +42,28 @@ class FeaturePerFrame
         pointRight.x() = _point(0);
         pointRight.y() = _point(1);
         pointRight.z() = _point(2);
+        ori_pointRight = pointRight; 
         uvRight.x() = _point(3);
         uvRight.y() = _point(4);
         velocityRight.x() = _point(5); 
         velocityRight.y() = _point(6); 
         is_stereo = true;
+
+        // call getDepth()
+        getDepth();
     }
 
     // triangulation to compute depth 
     double getDepth(); 
+
+    Eigen::Matrix2d getOmega(); // inverse of covariance matrix
 
     void print(){
         printf("point: %f %f %f uv: %f %f \n", point.x(), point.y(), point.z(), uv.x(), uv.y());
     }
     double cur_td;
     Vector3d point, pointRight;
+    Vector3d ori_point, ori_pointRight; 
     Vector2d uv, uvRight;
     Vector2d velocity, velocityRight;
     double z;

@@ -45,6 +45,9 @@ add_executable(vins_estimator_stereo
     src/factor/marginalization_factor.cpp
     src/factor/sampson_factor.cpp
     src/factor/sampson_jacobian.cpp
+    src/factor/projectionOneFrameTwoCamFactor.cpp 
+    src/factor/projectionTwoFrameOneCamFactor.cpp
+    src/factor/projectionTwoFrameTwoCamFactor.cpp
     src/utility/utility.cpp
     src/utility/visualization.cpp
     src/utility/CameraPoseVisualization.cpp

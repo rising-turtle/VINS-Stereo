@@ -112,6 +112,7 @@ void readParameters(ros::NodeHandle &n)
         if (ESTIMATE_EXTRINSIC == 0)
             ROS_WARN(" fix extrinsic param ");
 
+        // T_u2c1
         cv::Mat cv_R, cv_T;
         fsSettings["extrinsicRotation"] >> cv_R;
         fsSettings["extrinsicTranslation"] >> cv_T;
@@ -123,8 +124,18 @@ void readParameters(ros::NodeHandle &n)
 	      eigen_R = Q.normalized();
         RIC.push_back(eigen_R);
         TIC.push_back(eigen_T);
-        ROS_INFO_STREAM("Extrinsic_R : " << std::endl << RIC[0]);
-        ROS_INFO_STREAM("Extrinsic_T : " << std::endl << TIC[0].transpose());
+        ROS_INFO_STREAM("Extrinsic_R1 : " << std::endl << RIC[0]);
+        ROS_INFO_STREAM("Extrinsic_T1 : " << std::endl << TIC[0].transpose());
+
+        // T_u2c2 
+        cv::Mat cv_TT;
+        fsSettings["body_T_cam1"] >> cv_TT;
+        Eigen::Matrix4d T;
+        cv::cv2eigen(cv_TT, T);
+        RIC.push_back(T.block<3, 3>(0, 0));
+        TIC.push_back(T.block<3, 1>(0, 3));
+        ROS_INFO_STREAM("Extrinsic_R2 : " << std::endl << RIC[1]);
+        ROS_INFO_STREAM("Extrinsic_T2 : " << std::endl << TIC[1].transpose());
     }
 
     // transformation between stereo cams 

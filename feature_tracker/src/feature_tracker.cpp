@@ -242,18 +242,25 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
                 vector<cv::Point2f> un_l_pts, un_r_pts; 
                 un_l_pts.reserve(ids.size()); 
                 un_r_pts.reserve(ids.size()); 
+                // ofstream ouf("left-right_ori.txt"); 
+                // ofstream ouf2("left-right_lift.txt"); 
                 for(int i=0; i<ids.size(); i++){
                     if(status[i]){
                         Eigen::Vector3d tmp_p;
                         m_camera[0]->liftProjective(Eigen::Vector2d(cur_pts[i].x, cur_pts[i].y), tmp_p);
+                        // ouf2 << i<<" l: "<< tmp_p.transpose()<<" "; 
                         tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
                         tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
                         un_l_pts.push_back(cv::Point2f(tmp_p.x(), tmp_p.y())); 
+                        // ouf2<<" proj: "<<tmp_p.x()<<" "<<tmp_p.y()<<" "<<endl; 
 
                         m_camera[1]->liftProjective(Eigen::Vector2d(cur_right_pts[i].x, cur_right_pts[i].y), tmp_p);
+                        // ouf2 << i<<" r: "<< tmp_p.transpose()<<" "; 
                         tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
                         tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
                         un_r_pts.push_back(cv::Point2f(tmp_p.x(), tmp_p.y()));
+                        // ouf2<<" proj: "<<tmp_p.x()<<" "<<tmp_p.y()<<" "<<endl; 
+                        // ouf<<i<<" "<<cur_pts[i].x<<" "<<cur_pts[i].y<<" "<<cur_right_pts[i].x<<" "<<cur_right_pts[i].y<<endl;
                     }
                 }
 
@@ -268,6 +275,16 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             reduceVector(cur_right_pts, lr_fund_status);
             reduceVector(ids_right, lr_fund_status);
 
+            {
+                // for debug 
+                // reduceVector(un_l_pts, lr_fund_status); 
+                // reduceVector(un_r_pts, lr_fund_status);
+                // ofstream ouf("left-right.txt"); 
+                // for(int i=0; i<un_l_pts.size(); i++){
+                //     ouf << un_l_pts[i].x<<" "<<un_l_pts[i].y<<" "<<un_r_pts[i].x<<" "<<un_r_pts[i].y<<endl; 
+                // }
+                // ouf.close(); 
+            }
             // only keep left-right pts
             /*
             reduceVector(cur_pts, status);

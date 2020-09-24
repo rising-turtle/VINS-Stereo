@@ -1,4 +1,38 @@
 #include "feature_manager.h"
+#include "utility/utility.h"
+
+Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
+{
+    Eigen::Matrix2d sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+
+    if(getDepth() <= 0) {
+        ROS_ERROR("feature_manager.cpp: something is wrong!"); 
+        return sqrt_info; 
+    }
+
+    // Chapter 6 "Statistical Optimization for Geometric Computation"
+    double epsilon = 1.5 / FOCAL_LENGTH; 
+    
+    Eigen::Matrix3d R = Rrl.transpose();
+    Vector3d h = Trl;  
+    Eigen::Matrix3d G = Utility::skewSymmetric(h); 
+    Eigen::Matrix3d Gt = G.transpose(); 
+    Eigen::Matrix3d Pk = Eigen::Matrix3d::Identity(); 
+    Pk(2,2) = 0; 
+    Eigen::Vector3d x1 = Pk*G*pointRight;
+    Eigen::Matrix3d XX = x1*x1.transpose(); 
+    Eigen::Vector3d x2 = Pk*Gt*point; 
+    double de = x1.squaredNorm() + x2.squaredNorm(); 
+    Eigen::Matrix2d XX2 = XX.block<2,2>(0,0)/de; 
+    Eigen::Matrix2d cov = Eigen::Matrix2d::Identity() - XX2; 
+    Eigen::Matrix2d cc = Eigen::Matrix2d::Zero(); 
+    cc(0,0) = sqrt(cov(0,0)); 
+    cc(1,1) = sqrt(cov(1,1)); 
+    cov = epsilon * cc; 
+
+    sqrt_info = cov.inverse(); 
+    return sqrt_info; 
+}
 
 // triangulation to compute depth 
 double FeaturePerFrame::getDepth()
@@ -11,7 +45,7 @@ double FeaturePerFrame::getDepth()
         return -1; 
     }
 
-
+    // check the triangulated depth 
     Eigen::Matrix<double, 3, 4> leftPose = Eigen::Matrix<double, 3, 4>::Zero();
     leftPose.leftCols<3>() = Eigen::Matrix3d::Identity(); 
 
@@ -27,7 +61,8 @@ double FeaturePerFrame::getDepth()
     ((FeatureManager*)0)->triangulatePoint(leftPose, rightPose, point0, point1, point3d); 
 
     double depth = point3d.z(); 
-    if(depth <= 0.1 || depth >= 7){ // too small or too large depth, not reliable 
+    // if(depth <= 0.3 || depth >= 7){ // too small or too large depth, not reliable 
+    if(depth <= 0.3){ // barely no object so close to the camera 
         // ROS_ERROR("feature_manager.cpp: what? depth: %lf", depth); 
         // cout<<"feature_id: "<< feat_id <<"point0: "<<point0.transpose()<<" point1: "<<point1.transpose()<<" point3d: "<<point3d.transpose()<<endl;
         is_stereo = false; 
@@ -36,6 +71,32 @@ double FeaturePerFrame::getDepth()
         return -1; 
     }
     dpt = depth; 
+
+    // stereo correction, Chapter 6 "Statistical Optimization for Geometric Computation"
+    Vector3d np0 = point; 
+    Vector3d np1 = pointRight; 
+
+    Eigen::Matrix3d R = Rrl.transpose();
+    Vector3d h = Trl;  
+    Eigen::Matrix3d G = Utility::skewSymmetric(h); 
+    Eigen::Matrix3d Gt = G.transpose(); 
+
+    double fe = np0.transpose() * G * np1; 
+    double de1 = np1.transpose() * Gt * G * np1; 
+    double de2 = np0.transpose() * G * Gt * np0;
+    double de = de1 + de2; 
+    Vector3d delta_np0 = fe * G * np1; 
+    Vector3d delta_np1 = fe * Gt * np0; 
+
+    // temporary solution, needs to improve 
+    // TODO: update uv and uvRight as well 
+    point = np0 - delta_np0/de; 
+    pointRight = np1 - delta_np1/de; 
+    point0 = point.head(2); 
+    point1 = pointRight.head(2); 
+
+    ((FeatureManager*)0)->triangulatePoint(leftPose, rightPose, point0, point1, point3d); 
+    depth = point3d.z(); 
 
     return depth; 
 }
@@ -380,7 +441,8 @@ void FeatureManager::triangulateWithDepth(Vector3d Ps[], Vector3d tic[], Matrix3
             Eigen::Matrix3d R0 = Rs[start_frame+i] * ric[0];
             double depth_threshold = 7; //for handheld and wheeled application. Since d435i <3 is quiet acc
             //double depth_threshold = 10; //for tracked application, since IMU quite noisy in this scene             
-            if (it_per_id.feature_per_frame[i].getDepth() < 0.1 || it_per_id.feature_per_frame[i].getDepth() >depth_threshold) 
+            // if (it_per_id.feature_per_frame[i].getDepth() < 0.3 || it_per_id.feature_per_frame[i].getDepth() >depth_threshold) 
+            if (it_per_id.feature_per_frame[i].getDepth() < 0.3) 
                 continue;
             Eigen::Vector3d point0(it_per_id.feature_per_frame[i].point * it_per_id.feature_per_frame[i].getDepth());
 
