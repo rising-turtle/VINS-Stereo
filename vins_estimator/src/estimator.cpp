@@ -843,12 +843,19 @@ void Estimator::solveOdometry()
     if (solver_flag == NON_LINEAR)
     {
         TicToc t_tri;
-        f_manager.triangulateWithDepth(Ps, tic, ric);
+        // f_manager.triangulateWithDepth(Ps, tic, ric);
+        f_manager.triangulateStereo();
         f_manager.triangulate(Ps, tic, ric);
         ROS_DEBUG("triangulation costs %f", t_tri.toc());
         // optimization();
-        // optimizationStereo(); 
-        optimizationStereoWithCorrection(); 
+
+        // TODO: why it does not work? it seems that the whole VIO structure is shrinking, indicating incorrect scale
+        // need to dig into the reason why add multiple edges, the accuracy decreases! 
+        // OKVIS should work, need to figure out the reason
+        if(!g_use_stereo_correction)
+            optimizationStereo();  
+        else
+            optimizationStereoWithCorrection(); 
     }
 }
 
@@ -1347,6 +1354,8 @@ void Estimator::optimizationStereo()
         ceres::LocalParameterization *local_parameterization = new PoseLocalParameterization();
         problem.AddParameterBlock(para_Pose[i], SIZE_POSE, local_parameterization);
         problem.AddParameterBlock(para_SpeedBias[i], SIZE_SPEEDBIAS);
+        if(i<=1)
+            problem.SetParameterBlockConstant(para_Pose[i]);
     }
     // for (int i = 0; i < 1; i++){
     for (int i = 0; i < NUM_OF_CAM; i++){
@@ -1394,6 +1403,11 @@ void Estimator::optimizationStereo()
         int imu_i = it_per_id.start_frame, imu_j = imu_i - 1;
 
         Vector3d pts_i = it_per_id.feature_per_frame[0].point;
+
+        // these variables for debug 
+        double left_e_norm, right_e_norm; 
+        ProjectionTwoFrameOneCamFactor *f_td_left; 
+
         for(auto &it_per_frame : it_per_id.feature_per_frame){
             imu_j++; 
             if(imu_i != imu_j){
@@ -1402,6 +1416,29 @@ void Estimator::optimizationStereo()
                                         it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
                 ceres::ResidualBlockId fid = problem.AddResidualBlock(f_td, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Feature[feature_index], para_Td[0]);
                 f_m_cnt++;
+
+                if(0 && it_per_frame.getDepth() > 0){
+                     ROS_WARN("estimator.cpp: add projection factor to feature %d between imu_i %d and imu_j %d", it_per_id.feature_id, imu_i, imu_j);
+                    //        cout<<"Pose imu_i: "<<endl;
+                    // for(int i=0; i<SIZE_POSE; i++)
+                    //     cout<<" "<<para_Pose[imu_i][i];
+                    // cout<<endl<<"Pose imu_j: "<<endl;
+                    // for(int i=0; i<SIZE_POSE; i++)
+                    //     cout<<" "<<para_Pose[imu_j][i];
+
+                    cout<<endl<<"feature index: "<<feature_index<<" lambda: "<<para_Feature[feature_index][0]<<endl;
+                    cout<<"left_pj: "<<pts_j.transpose()<<" depth_j: "<<it_per_frame.getDepth()<<endl;
+                    if(it_per_id.feature_per_frame[0].getDepth() > 0)
+                        cout<<"right_pi: "<<it_per_id.feature_per_frame[0].pointRight.transpose()<<" depth: "<<it_per_id.feature_per_frame[0].getDepth()<<endl;
+
+                    vector<double*>* para = new vector<double*>;  
+                    problem.GetParameterBlocksForResidualBlock(fid, para); 
+                    vector<double> res(2); 
+                    f_td->Evaluate(&para[0][0], &res[0], 0); 
+                    cout<<"estimator.cpp: residual: "<<res[0]<<" "<<res[1]<<endl;
+                    left_e_norm = sqrt(SQ(res[0]) + SQ(res[1]));
+                    f_td_left = f_td; 
+                }
             }
 
             // a valid stereo measurement 
@@ -1410,12 +1447,34 @@ void Estimator::optimizationStereo()
                 if(imu_i != imu_j){
                     ProjectionTwoFrameTwoCamFactor *f = new ProjectionTwoFrameTwoCamFactor(pts_i, pts_j_right, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocityRight,
                                                                  it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
-                    ceres::ResidualBlockId fid = problem.AddResidualBlock(f, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]);
+                    // ceres::ResidualBlockId fid = problem.AddResidualBlock(f, loss_function, para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]);
                     f_m_cnt++;
+                    
+                    // if(0){
+                    //     ROS_DEBUG("estimator.cpp: add stereo factor to feature %d between imu_i %d and imu_j %d", it_per_id.feature_id, imu_i, imu_j);
+                    //     cout<<endl<<"feature index: "<<feature_index<<" lambda: "<<para_Feature[feature_index][0]<<endl;
+                    //     cout<<"right_pj: "<<pts_j_right.transpose()<<endl; 
+                      
+                    //     vector<double*>* para = new vector<double*>;  
+                    //     problem.GetParameterBlocksForResidualBlock(fid, para); 
+                    //     vector<double> res(2); 
+                    //     f->Evaluate(&para[0][0], &res[0], 0); 
+                    //     cout<<"estimator.cpp: residual: "<<res[0]<<" "<<res[1]<<endl;
+                    //     right_e_norm = sqrt(SQ(res[0]) + SQ(res[1])); 
+                    //     if(right_e_norm > left_e_norm * 10){
+
+                    //         f_td_left->debug(&para[0][0], &res[0], 0); 
+
+                    //         f->debug(&para[0][0], &res[0], 0); 
+                    //         ROS_ERROR("estimator.cpp: something is wrong!");
+                    //         exit(0);
+                    //     }
+
+                    // }
                 }else{
                     ProjectionOneFrameTwoCamFactor *f = new ProjectionOneFrameTwoCamFactor(pts_i, pts_j_right, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocityRight,
                                                                  it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
-                    ceres::ResidualBlockId fid = problem.AddResidualBlock(f, loss_function, para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]);
+                    // ceres::ResidualBlockId fid = problem.AddResidualBlock(f, loss_function, para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]);
                     f_m_cnt++;
                 }
             }
@@ -1544,14 +1603,14 @@ void Estimator::optimizationStereo()
                             ResidualBlockInfo *residual_block_info = new ResidualBlockInfo(f, loss_function,
                                                                                            vector<double *>{para_Pose[imu_i], para_Pose[imu_j], para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]},
                                                                                            vector<int>{0, 4});
-                            marginalization_info->addResidualBlockInfo(residual_block_info);
+                            // marginalization_info->addResidualBlockInfo(residual_block_info);
                         }else{
                             ProjectionOneFrameTwoCamFactor *f = new ProjectionOneFrameTwoCamFactor(pts_i, pts_j_right, it_per_id.feature_per_frame[0].velocity, it_per_frame.velocityRight,
                                                                           it_per_id.feature_per_frame[0].cur_td, it_per_frame.cur_td);
                             ResidualBlockInfo *residual_block_info = new ResidualBlockInfo(f, loss_function,
                                                                                            vector<double *>{para_Ex_Pose[0], para_Ex_Pose[1], para_Feature[feature_index], para_Td[0]},
                                                                                            vector<int>{2});
-                            marginalization_info->addResidualBlockInfo(residual_block_info);
+                            // marginalization_info->addResidualBlockInfo(residual_block_info);
                         }
                     }
                 }

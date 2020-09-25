@@ -45,6 +45,7 @@ extern int ROLLING_SHUTTER;
 extern double ROW, COL;
 extern double nG;
 extern bool g_use_sampson_model;
+extern bool g_use_stereo_correction; 
 
 void readParameters(ros::NodeHandle &n);
 

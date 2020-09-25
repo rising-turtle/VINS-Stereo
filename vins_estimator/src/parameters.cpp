@@ -33,6 +33,7 @@ double ROW, COL;
 double TD, TR;
 double nG = 1.;
 bool g_use_sampson_model = false;
+bool g_use_stereo_correction = true; // false; 
 
 template <typename T>
 T readParam(ros::NodeHandle &n, std::string name)

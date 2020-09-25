@@ -11,6 +11,8 @@
 
 #include "projectionTwoFrameTwoCamFactor.h"
 #include <iomanip>
+#include <iostream>
+using namespace std; 
 
 Eigen::Matrix2d ProjectionTwoFrameTwoCamFactor::sqrt_info;
 double ProjectionTwoFrameTwoCamFactor::sum_t;
@@ -70,6 +72,24 @@ bool ProjectionTwoFrameTwoCamFactor::debug(double const *const *parameters, doub
     Eigen::Vector3d pts_imu_j = Qj.inverse() * (pts_w - Pj);
     Eigen::Vector3d pts_camera_j = qic2.inverse() * (pts_imu_j - tic2);
     Eigen::Map<Eigen::Vector2d> residual(residuals);
+
+    cout<<"Pi: "<<Pi.transpose()<<endl; 
+    cout<<"Qi: "<<endl<<Qi.toRotationMatrix()<<endl; 
+    cout<<"Pj: "<<Pj.transpose()<<endl; 
+    cout<<"Qj: "<<endl<<Qj.toRotationMatrix()<<endl;
+    cout<<"tic: "<<tic.transpose()<<endl;
+    cout<<"qic: "<<endl<<qic.toRotationMatrix()<<endl; 
+    cout<<"tic2: "<<tic2.transpose()<<endl; 
+    cout<<"qic2: "<<endl<<qic2.toRotationMatrix()<<endl;
+    cout<<"td: "<<td<<endl;
+    cout<<"inv_dep_i: "<<inv_dep_i<<endl; 
+    cout<<"pts_i_td: "<<pts_i_td.transpose()<<endl; 
+    cout<<"pts_j_td: "<<pts_j_td.transpose()<<endl;
+    cout<<"pts_cam_i: "<<pts_camera_i.transpose()<<endl; 
+    cout<<"pts_imu_i: "<<pts_imu_i.transpose()<<endl; 
+    cout<<"pts_w: "<<pts_w.transpose()<<endl;
+    cout<<"pts_imu_j: "<<pts_imu_j.transpose()<<endl; 
+    cout<<"pts_camera_j: "<<pts_camera_j.transpose()<<endl; 
 
 #ifdef UNIT_SPHERE_ERROR 
     residual =  tangent_base * (pts_camera_j.normalized() - pts_j_td.normalized());

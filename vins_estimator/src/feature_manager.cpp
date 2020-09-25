@@ -10,6 +10,9 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
         return sqrt_info; 
     }
 
+    if(!g_use_stereo_correction)
+        return sqrt_info; 
+
     // Chapter 6 "Statistical Optimization for Geometric Computation"
     double epsilon = 1.5 / FOCAL_LENGTH; 
     
@@ -72,6 +75,9 @@ double FeaturePerFrame::getDepth()
     }
     dpt = depth; 
 
+    if(!g_use_stereo_correction) // don't apply geometric correction 
+        return dpt; 
+
     // stereo correction, Chapter 6 "Statistical Optimization for Geometric Computation"
     Vector3d np0 = point; 
     Vector3d np1 = pointRight; 
@@ -80,13 +86,18 @@ double FeaturePerFrame::getDepth()
     Vector3d h = Trl;  
     Eigen::Matrix3d G = Utility::skewSymmetric(h); 
     Eigen::Matrix3d Gt = G.transpose(); 
+    Eigen::Matrix3d Pk = Eigen::Matrix3d::Identity(); 
+    Pk(2,2) = 0; 
 
     double fe = np0.transpose() * G * np1; 
-    double de1 = np1.transpose() * Gt * G * np1; 
-    double de2 = np0.transpose() * G * Gt * np0;
-    double de = de1 + de2; 
-    Vector3d delta_np0 = fe * G * np1; 
-    Vector3d delta_np1 = fe * Gt * np0; 
+    // double de1 = np1.transpose() * Gt * G * np1; 
+    // double de2 = np0.transpose() * G * Gt * np0;
+    // double de = de1 + de2; 
+    Vector3d ve1 =  Pk*Gt*np0;
+    Vector3d ve2 =  Pk*G*np1;
+    double de = ve1.squaredNorm() + ve2.squaredNorm();
+    Vector3d delta_np0 = fe * Pk * G * np1; 
+    Vector3d delta_np1 = fe * Pk * Gt * np0; 
 
     // temporary solution, needs to improve 
     // TODO: update uv and uvRight as well 
@@ -416,7 +427,20 @@ void FeatureManager::triangulatePoint(Eigen::Matrix<double, 3, 4> &Pose0, Eigen:
     point_3d(2) = triangulated_point(2) / triangulated_point(3);
 }
 
+void FeatureManager::triangulateStereo()
+{
+    for (auto &it_per_id : feature)
+    {
+        if (it_per_id.estimated_depth > 0)
+            continue;
+        double depth = it_per_id.feature_per_frame[0].getDepth(); 
+        if(depth > 0){
+            it_per_id.estimated_depth = depth;
+        }
+    }
+}
 
+// this function not good 
 void FeatureManager::triangulateWithDepth(Vector3d Ps[], Vector3d tic[], Matrix3d ric[])
 {
     for (auto &it_per_id : feature)
