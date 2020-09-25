@@ -1,6 +1,6 @@
 <launch>
-    <arg name="config_path" default = "$(find feature_tracker_stereo)/../config/fpv/fpv_forward.yaml" />
-	  <arg name="vins_path" default = "$(find feature_tracker_stereo)/../config/fpv" />
+    <arg name="config_path" default = "$(find feature_tracker_stereo)/../config/fpv_forward_45/fpv_forward_45_degree.yaml" />
+      <arg name="vins_path" default = "$(find feature_tracker_stereo)/../config/fpv_forward_45" />
       <arg name="cam0_path" default = "$(arg vins_path)/cam0_fisheye.yaml"/>
 
     <node name="feature_tracker_stereo" pkg="feature_tracker_stereo" type="feature_tracker_stereo" output="log">

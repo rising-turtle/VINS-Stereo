@@ -9,19 +9,19 @@ projection_parameters:
    # k3: 0.0007150348452162257
    # k4: -0.0020532361418706202
    # k5: 0.00020293673591811182
-   k2: -0.013721808247486035  
-   k3: 0.020727425669427896 
-   k4: -0.012786476702685545
-   k5: 0.0025242267320687625
-   mu: 278.66723066149086
-   mv: 278.48991409740296
-   u0: 319.75221200593535
-   v0: 241.96858910358173
+   k2: -6.545154718304953e-06
+   k3: -0.010379525898159981
+   k4: 0.014935312423953146
+   k5: -0.005639061406567785
+   mu: 275.46015578667294
+   mv: 274.9948095922592
+   u0: 315.958384100568
+   v0: 242.7123497822731
 
 
 #### for pose graph node 
 image_topic: "/snappy_cam/stereo_l"
-output_path: "/home/davidz/work/result/fpv_forward"
+output_path: "/home/davidz/work/result/fpv_forward_45"
 #loop closure parameters
 loop_closure: 1 #1                    # start loop closure
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
