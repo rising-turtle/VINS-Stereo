@@ -324,9 +324,13 @@ void process()
             estimator.processImage(image, img_msg->header);
 
             double whole_t = t_s.toc();
+            static double total_t = 0; 
+            total_t += whole_t; 
+            ROS_INFO("estimator_node_ss: total_t: %lf", total_t); 
             printStatistics(estimator, whole_t);
             std_msgs::Header header = img_msg->header;
             header.frame_id = "world";
+
 
             pubOdometry(estimator, header);
             pubKeyPoses(estimator, header);
