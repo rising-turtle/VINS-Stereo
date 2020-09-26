@@ -37,8 +37,6 @@ double distance(cv::Point2f pt1, cv::Point2f pt2)
     return sqrt(dx * dx + dy * dy);
 }
 
-
-
 FeatureTracker::FeatureTracker()
 {
     stereo_cam = 1;
@@ -114,6 +112,8 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
     }
     cur_pts.clear();
 
+    int opt_flow_w_size = 30; // 21; 
+
     if (prev_pts.size() > 0)
     {
         TicToc t_o;
@@ -122,7 +122,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
         if(hasPrediction)
         {
             cur_pts = predict_pts; // use predicted points 
-            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 1, 
+            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 1, 
             cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01), cv::OPTFLOW_USE_INITIAL_FLOW);
             
             int succ_num = 0;
@@ -132,16 +132,17 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
                     succ_num++;
             }
             if (succ_num < 10)
-               cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+               cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
         }
         else
-            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
+
         // reverse check
         if(FLOW_BACK)
         {
             vector<uchar> reverse_status;
             vector<cv::Point2f> reverse_pts = prev_pts;
-            cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 1, 
+            cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 1, 
             cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01), cv::OPTFLOW_USE_INITIAL_FLOW);
             //cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 3); 
             for(size_t i = 0; i < status.size(); i++)
@@ -218,11 +219,11 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             vector<uchar> status, statusRightLeft;
             vector<float> err;
             // cur left ---- cur right
-            cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(21, 21), 3);
+            cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
             // reverse check cur right ---- cur left
             if(FLOW_BACK)
             {
-                cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err, cv::Size(21, 21), 3);
+                cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
                 for(size_t i = 0; i < status.size(); i++)
                 {
                     if(status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) && distance(cur_pts[i], reverseLeftPts[i]) <= 0.5){
@@ -267,10 +268,13 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             ids_right = ids;
             reduceVector(cur_right_pts, status);
             reduceVector(ids_right, status);
-
+            // ROS_WARN("cur_right_pts.size: %d un_l_pts.size: %d", cur_right_pts.size(), un_l_pts.size());
             assert(cur_right_pts.size() == un_l_pts.size()); 
             vector<uchar> lr_fund_status; 
-            cv::findFundamentalMat(un_l_pts, un_r_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, lr_fund_status); 
+            if(un_l_pts.size() > 10)
+                cv::findFundamentalMat(un_l_pts, un_r_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, lr_fund_status); 
+            else
+                lr_fund_status.resize(un_l_pts.size(), 0);
 
             reduceVector(cur_right_pts, lr_fund_status);
             reduceVector(ids_right, lr_fund_status);

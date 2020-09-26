@@ -71,6 +71,8 @@ void readParameters(ros::NodeHandle &n)
     std::string cam0Path = VINS_FOLDER_PATH + "/" + cam0Calibfile; 
     std::string cam1Path = VINS_FOLDER_PATH + "/" + cam1Calibfile; 
 
+    ROS_DEBUG("cam0Path: %s", cam0Path.c_str()); 
+    ROS_DEBUG("cam1Path: %s", cam1Path.c_str());
     CAM_NAMES.push_back(cam0Path); 
     CAM_NAMES.push_back(cam1Path); 
 
