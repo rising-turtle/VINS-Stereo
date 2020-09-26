@@ -14,7 +14,7 @@ image_width: 640
 image_height: 480
 
 # Extrinsic parameter between IMU and Camera.
-estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
+estimate_extrinsic: 0  # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
                         # 1  Have an initial guess about extrinsic parameters. We will optimize around your initial guess.
                         # 2  Don't know anything about extrinsic parameters. You don't need to give R,T. We will try to calibrate it. Do some rotation movement at beginning.
 #If you choose 0 or 1, you should write down the following matrix.
@@ -57,7 +57,7 @@ body_T_cam1: !!opencv-matrix # Timu2c_2, Tc1_2_c2 is a virtual transformation [I
           0.000000,  0.000000, -0.000000,  1.000000]
 
 #feature traker paprameters
-max_cnt: 250            # max feature number in feature tracking
+max_cnt: 300 #250            # max feature number in feature tracking
 min_dist: 25            # min distance between two features
 freq: 10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image
 F_threshold: 1.0        # ransac threshold (pixel)
@@ -72,8 +72,8 @@ max_num_iterations: 8   # max solver itrations, to guarantee real time
 keyframe_parallax: 10.0 # keyframe selection threshold (pixel)
 
 #imu parameters       The more accurate parameters you provide, the better performance
-acc_n: 0.1 # 0.04          # accelerometer measurement noise standard deviation. #0.2   0.04
-gyr_n: 0.05 #0.004         # gyroscope measurement noise standard deviation.     #0.05  0.004
+acc_n: 0.12 # 0.12 #0.1 # 0.04          # accelerometer measurement noise standard deviation. #0.2   0.04
+gyr_n: 0.02 #0.05 # 0.02 # 0.05 #0.004         # gyroscope measurement noise standard deviation.     #0.05  0.004
 acc_w: 0.002 #0.0004         # accelerometer bias random work noise standard deviation.  #0.02
 gyr_w: 0.00004 #2.0e-5       # gyroscope bias random work noise standard deviation.     #4.0e-5
 g_norm: 9.80766     # gravity magnitude

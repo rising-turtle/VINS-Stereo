@@ -112,7 +112,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
     }
     cur_pts.clear();
 
-    int opt_flow_w_size = 30; // 21; 
+    int opt_flow_w_size = 21;// ;30; // 21; 
 
     if (prev_pts.size() > 0)
     {
