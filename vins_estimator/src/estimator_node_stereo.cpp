@@ -334,7 +334,7 @@ void process()
 
             static double total_t = 0; 
             total_t += whole_t; 
-            ROS_INFO("estimator_node_ss: total_t: %lf ms", total_t); 
+            // ROS_INFO("estimator_node_ss: total_t: %lf ms", total_t); 
 
             printStatistics(estimator, whole_t);
             std_msgs::Header header = img_msg->header;
@@ -365,7 +365,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "vins_estimator_stereo");
     ros::NodeHandle n("~");
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // Info
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug); // Info
     readParameters(n);
     estimator.setParameter();
 #ifdef EIGEN_DONT_PARALLELIZE

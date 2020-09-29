@@ -1,0 +1,20 @@
+<launch>
+    <arg name="config_path" default = "$(find feature_tracker_stereo)/../config/fpv/fpv_forward.yaml" />
+	  <arg name="vins_path" default = "$(find feature_tracker_stereo)/../config/fpv" />
+      <arg name="cam0_path" default = "$(arg vins_path)/cam0_fisheye.yaml"/>
+
+    <node name="feature_tracker" pkg="feature_tracker" type="feature_tracker" output="screen"> <!-- run with VINS-Mono's feature tracker node, need to change the code in line 168 of feature_tracker_node.cpp in VINS-Mono-->
+        <param name="config_file" type="string" value="$(arg config_path)" />
+        <param name="vins_folder" type="string" value="$(arg vins_path)" />
+
+    </node>
+
+    <node name="vins_estimator_stereo" pkg="vins_estimator_stereo" type="vins_estimator_stereo" output="screen">
+       <param name="config_file" type="string" value="$(arg config_path)" />
+       <param name="vins_folder" type="string" value="$(arg vins_path)" />
+       <remap from="/feature_tracker_stereo/feature" to="/feature_tracker/feature"/>
+    </node>
+
+    <include file="vins_rviz.launch"/>
+
+</launch>

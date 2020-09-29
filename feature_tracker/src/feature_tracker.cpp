@@ -55,8 +55,9 @@ void FeatureTracker::setMask()
     // prefer to keep features that are tracked for long time
     vector<pair<int, pair<cv::Point2f, int>>> cnt_pts_id;
 
-    for (unsigned int i = 0; i < cur_pts.size(); i++)
+    for (unsigned int i = 0; i < cur_pts.size(); i++){
         cnt_pts_id.push_back(make_pair(track_cnt[i], make_pair(cur_pts[i], ids[i])));
+    }
 
     sort(cnt_pts_id.begin(), cnt_pts_id.end(), [](const pair<int, pair<cv::Point2f, int>> &a, const pair<int, pair<cv::Point2f, int>> &b)
          {
@@ -162,6 +163,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
         reduceVector(prev_pts, status);
         reduceVector(cur_pts, status);
         reduceVector(ids, status );
+        reduceVector(prev_un_pts, status);
         reduceVector(track_cnt, status);
         // ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
         // printf("track cnt %d at %lf\n", (int)ids.size(), cur_time);
@@ -172,7 +174,9 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
 
     if (PUB_THIS_FRAME)
     {
+        // ROS_DEBUG("before F, cur_pts.size(): %d", cur_pts.size()); 
         rejectWithF();
+        // ROS_DEBUG("afater F, cur_pts.size(): %d", cur_pts.size()); 
         // ROS_DEBUG("set mask begins");
         TicToc t_m;
         setMask();
@@ -188,16 +192,23 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             if (mask.type() != CV_8UC1)
                 cout << "mask type wrong " << endl;
             cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
+
+            // cv::imwrite("mask1.png", mask); 
+            // cout <<" cur_pts.size(): "<<cur_pts.size()<<endl; 
+
         }
         else
             n_pts.clear();
         // ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
+
+        ROS_DEBUG("feature_tracker: detect new %d points", n_pts.size()); 
 
         for (auto &p : n_pts)
         {
             cur_pts.push_back(p);
             ids.push_back(n_id++);
             track_cnt.push_back(1);
+            // cout <<" new_pt: "<<n_id<<" "<<p.x<<" "<<p.y<<endl; 
         }
         // printf("feature cnt after add %d\n", (int)ids.size());
     }
@@ -205,7 +216,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
     pts_velocity = ptsVelocity(ids, cur_un_pts, cur_un_pts_map, prev_un_pts_map);
 
-    if(!_img1.empty() && stereo_cam)
+    if(0 && !_img1.empty() && stereo_cam)
     {
         ids_right.clear();
         cur_right_pts.clear();
@@ -574,9 +585,9 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
 
 void FeatureTracker::rejectWithF()
 {
-     if (cur_pts.size() >= 8)
+    if (cur_pts.size() >= 8)
     {
-        // ROS_DEBUG("FM ransac begins");
+        ROS_DEBUG("FM ransac begins");
         TicToc t_f;
         vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_prev_pts(prev_pts.size());
         for (unsigned int i = 0; i < cur_pts.size(); i++)
@@ -594,15 +605,18 @@ void FeatureTracker::rejectWithF()
         }
 
         vector<uchar> status;
-        cv::findFundamentalMat(un_cur_pts, un_prev_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
+        // this is the bug, un_prev_pts is the first parameter followed by un_cur_pts 
+        // cv::findFundamentalMat(un_cur_pts, un_prev_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
+        cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
         int size_a = cur_pts.size();
         reduceVector(prev_pts, status);
         reduceVector(cur_pts, status);
-        reduceVector(cur_un_pts, status);
+        // reduceVector(cur_un_pts, status);
+        reduceVector(prev_un_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
-        // ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
-        // ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
+        ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
+        ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
     }
 }
 

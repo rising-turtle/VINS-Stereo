@@ -10,8 +10,26 @@ output_path: "/home/davidz/work/result/fpv_forward"
 #camera calibration
 cam0_calib: "cam0_fisheye.yaml"
 cam1_calib: "cam1_fisheye.yaml"
+# image_width: 640
+# image_height: 480
+
+### for debug 
+#camera calibration
+image_topic: "/snappy_cam/stereo_l"
+
+model_type: KANNALA_BRANDT
+camera_name: camera
 image_width: 640
 image_height: 480
+projection_parameters:
+   k2: -0.013721808247486035  
+   k3: 0.020727425669427896 
+   k4: -0.012786476702685545
+   k5: 0.0025242267320687625
+   mu: 278.66723066149086
+   mv: 278.48991409740296
+   u0: 319.75221200593535
+   v0: 241.96858910358173
 
 # Extrinsic parameter between IMU and Camera.
 estimate_extrinsic: 0   # 0  Have an accurate extrinsic parameters. We will trust the following imu^R_cam, imu^T_cam, don't change it.
@@ -63,7 +81,7 @@ F_threshold: 1.0        # ransac threshold (pixel)
 show_track: 1           # publish tracking image as topic
 equalize: 0             # if image is too dark or light, trun on equalize to find enough features
 fisheye: 1              # if using fisheye, trun on it. A circle mask will be loaded to remove edge noisy points
-flow_back: 1 #1            # if need double check by reverse optical flow 
+flow_back: 0 #1            # if need double check by reverse optical flow 
 
 #optimization parameters
 max_solver_time: 0.04  # max solver itration time (ms), to guarantee real time

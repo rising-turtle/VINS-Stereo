@@ -844,7 +844,7 @@ void Estimator::solveOdometry()
     {
         TicToc t_tri;
         // f_manager.triangulateWithDepth(Ps, tic, ric);
-        f_manager.triangulateStereo();
+        // f_manager.triangulateStereo();
         f_manager.triangulate(Ps, tic, ric);
         ROS_DEBUG("triangulation costs %f", t_tri.toc());
         // optimization();

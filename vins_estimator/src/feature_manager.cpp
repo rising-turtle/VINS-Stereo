@@ -5,6 +5,8 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
 {
     Eigen::Matrix2d sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
 
+
+
     if(getDepth() <= 0) {
         ROS_ERROR("feature_manager.cpp: something is wrong!"); 
         return sqrt_info; 
@@ -13,6 +15,10 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
     if(!g_use_stereo_correction)
         return sqrt_info; 
 
+
+    return sqrt_info; 
+
+/*
     // Chapter 6 "Statistical Optimization for Geometric Computation"
     double epsilon = 1.5 / FOCAL_LENGTH; 
     
@@ -34,7 +40,7 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
     cov = epsilon * cc; 
 
     sqrt_info = cov.inverse(); 
-    return sqrt_info; 
+    return sqrt_info; */
 }
 
 // triangulation to compute depth 
@@ -169,6 +175,8 @@ bool FeatureManager::addFeatureCheckParallax(int frame_count, const map<int, vec
     {
         FeaturePerFrame f_per_fra(id_pts.second[0].second, td);
         f_per_fra.feat_id = id_pts.first; 
+        if(id_pts.second[0].first != 0)
+            ROS_ERROR("what? second[0].first = %d", id_pts.second[0].first );
         assert(id_pts.second[0].first == 0);
         if(id_pts.second.size() == 2)
         {

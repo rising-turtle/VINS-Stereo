@@ -50,6 +50,7 @@ void img_callback2(const sensor_msgs::ImageConstPtr &img_msg){
 // void img_callback(const sensor_msgs::ImageConstPtr &img_msg)
 void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
 {
+    static int cnt = 0; 
     // ROS_WARN("received img_msg timestamp: %lf", msg_timestamp);
     if(first_image_flag)
     {
@@ -153,7 +154,7 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         // cout <<" send feature_points before right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
 
         // features on the right image 
-        camera_id = 1; 
+        /* camera_id = 1; 
         for(size_t j=0; j < trackerData.ids_right.size(); j++){
             feature_id = trackerData.ids_right[j];
             if(hash_ids.find(feature_id) != hash_ids.end()){
@@ -168,15 +169,21 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
                 velocity_y_of_point.values.push_back(trackerData.right_pts_velocity[j].y);
                 // ouf << feature_id<<" right p1: "<<p.x<<" "<<p.y<<" "<<endl; 
             }
-        }
+        }*/
+
         // cout <<" send feature_points after right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
         // ROS_WARN("has published %d feature points", pub_count); 
+        
         feature_points->channels.push_back(id_of_point);
         feature_points->channels.push_back(u_of_point);
         feature_points->channels.push_back(v_of_point);
         feature_points->channels.push_back(velocity_x_of_point);
         feature_points->channels.push_back(velocity_y_of_point);
-        // ROS_INFO("publish %f, at %f with %d features ", feature_points->header.stamp.toSec(), ros::Time::now().toSec(),   feature_points->points.size());
+     
+        // static ofstream ouf2("history1.txt"); 
+        ROS_INFO("cnt = %d publish %f, at %f with %d features ", ++cnt, feature_points->header.stamp.toSec(), ros::Time::now().toSec(),   feature_points->points.size());
+        // ouf2<<"cnt = "<<cnt<<" publish "<<feature_points->header.stamp.toSec()<<" with "<<feature_points->points.size()<<" features "<<endl; 
+
         // skip the first image; since no optical speed on frist image
         if (!init_pub)
         {
