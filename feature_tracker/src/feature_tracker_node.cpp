@@ -154,7 +154,7 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         // cout <<" send feature_points before right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
 
         // features on the right image 
-        /* camera_id = 1; 
+        camera_id = 1; 
         for(size_t j=0; j < trackerData.ids_right.size(); j++){
             feature_id = trackerData.ids_right[j];
             if(hash_ids.find(feature_id) != hash_ids.end()){
@@ -167,9 +167,8 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
                 v_of_point.values.push_back(trackerData.cur_right_pts[j].y);
                 velocity_x_of_point.values.push_back(trackerData.right_pts_velocity[j].x);
                 velocity_y_of_point.values.push_back(trackerData.right_pts_velocity[j].y);
-                // ouf << feature_id<<" right p1: "<<p.x<<" "<<p.y<<" "<<endl; 
             }
-        }*/
+        }
 
         // cout <<" send feature_points after right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
         // ROS_WARN("has published %d feature points", pub_count); 
@@ -199,7 +198,7 @@ int main(int argc, char **argv)
 {
     ros::init(argc, argv, "feature_tracker_stereo");
     ros::NodeHandle n("~");
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug); // Debug Info
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // Debug Info
     readParameters(n);
 
     // setup cameras 

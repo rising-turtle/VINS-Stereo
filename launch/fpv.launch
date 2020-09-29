@@ -3,7 +3,7 @@
 	  <arg name="vins_path" default = "$(find feature_tracker_stereo)/../config/fpv" />
       <arg name="cam0_path" default = "$(arg vins_path)/cam0_fisheye.yaml"/>
 
-    <node name="feature_tracker_stereo" pkg="feature_tracker_stereo" type="feature_tracker_stereo" output="screen">
+    <node name="feature_tracker_stereo" pkg="feature_tracker_stereo" type="feature_tracker_stereo" output="log">
         <param name="config_file" type="string" value="$(arg config_path)" />
         <param name="vins_folder" type="string" value="$(arg vins_path)" />
     </node>

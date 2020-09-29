@@ -18,8 +18,8 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
 
     return sqrt_info; 
 
-/*
-    // Chapter 6 "Statistical Optimization for Geometric Computation"
+
+    /*// Chapter 6 "Statistical Optimization for Geometric Computation"
     double epsilon = 1.5 / FOCAL_LENGTH; 
     
     Eigen::Matrix3d R = Rrl.transpose();

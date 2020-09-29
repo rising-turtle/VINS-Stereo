@@ -185,7 +185,8 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             bool result = false;
             if( ESTIMATE_EXTRINSIC != 2 && (header.stamp.toSec() - initial_timestamp) > 0.1)
             {
-               result = initialStructure();
+               // result = initialStructure();
+               result = initialStructureStereo();
                initial_timestamp = header.stamp.toSec();
             }
             if(result)
@@ -654,8 +655,8 @@ bool Estimator::visualInitialAlignWithDepth()
         // show off the depth difference 
         if(it_per_id.feature_per_frame[0].getDepth() > 0 && it_per_id.estimated_depth > 0){
             dpt_err = sqrt(SQ(it_per_id.feature_per_frame[0].getDepth() - it_per_id.estimated_depth)); 
-            ROS_WARN("feature id: %d measured depth: %f estimated depth: %f, depth error: %lf", it_per_id.feature_id, it_per_id.feature_per_frame[0].getDepth(),
-                it_per_id.estimated_depth, dpt_err);
+            // ROS_WARN("feature id: %d measured depth: %f estimated depth: %f, depth error: %lf", it_per_id.feature_id, it_per_id.feature_per_frame[0].getDepth(),
+              //  it_per_id.estimated_depth, dpt_err);
 
             // show this feature's parallax and parallax angle 
             // double para_angle, parallax; 
@@ -844,7 +845,7 @@ void Estimator::solveOdometry()
     {
         TicToc t_tri;
         // f_manager.triangulateWithDepth(Ps, tic, ric);
-        // f_manager.triangulateStereo();
+        f_manager.triangulateStereo();
         f_manager.triangulate(Ps, tic, ric);
         ROS_DEBUG("triangulation costs %f", t_tri.toc());
         // optimization();

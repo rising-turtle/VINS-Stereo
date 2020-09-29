@@ -216,7 +216,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
     pts_velocity = ptsVelocity(ids, cur_un_pts, cur_un_pts_map, prev_un_pts_map);
 
-    if(0 && !_img1.empty() && stereo_cam)
+    if(!_img1.empty() && stereo_cam)
     {
         ids_right.clear();
         cur_right_pts.clear();
@@ -605,14 +605,14 @@ void FeatureTracker::rejectWithF()
         }
 
         vector<uchar> status;
-        // this is the bug, un_prev_pts is the first parameter followed by un_cur_pts 
-        // cv::findFundamentalMat(un_cur_pts, un_prev_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
-        cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
+        // two ways to handle outlier rejection, 
+        cv::findFundamentalMat(un_cur_pts, un_prev_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
+        reduceVector(cur_un_pts, status);
+        // cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
+        // reduceVector(prev_un_pts, status);
         int size_a = cur_pts.size();
         reduceVector(prev_pts, status);
         reduceVector(cur_pts, status);
-        // reduceVector(cur_un_pts, status);
-        reduceVector(prev_un_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
         ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
