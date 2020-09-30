@@ -335,7 +335,7 @@ void process()
             static double total_t = 0; 
             static int cnt = 0; 
             total_t += whole_t; 
-            ROS_INFO("estimator_node_ss: total_t: %lf ms average: %lf ms", total_t, total_t/(++cnt)); 
+            // ROS_INFO("estimator_node_ss: total_t: %lf ms average: %lf ms", total_t, total_t/(++cnt)); 
 
             printStatistics(estimator, whole_t);
             std_msgs::Header header = img_msg->header;
