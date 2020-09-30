@@ -191,7 +191,12 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         else
             pub_img.publish(feature_points);
     }
-    // ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
+    ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
+    static double total_t = 0; 
+    static int t_cnt = 0; 
+    double whole_t = t_r.toc();
+    total_t += whole_t; 
+    ROS_INFO("feature_tracker_ss: total_t: %lf ms, average: %lf ", total_t, total_t/(++t_cnt)); 
 }
 
 int main(int argc, char **argv)
