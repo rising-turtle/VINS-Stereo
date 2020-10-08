@@ -194,8 +194,10 @@ void Estimator::processImage(const map<int, vector<pair<int, Eigen::Matrix<doubl
             bool result = false;
             if( ESTIMATE_EXTRINSIC != 2 && (header.stamp.toSec() - initial_timestamp) > 0.1)
             {
-               result = initialStructure();
-               // result = initialStructureStereo();
+               // result = initialStructure();
+               result = initialStructureStereo();
+               if(!result)
+                result = initialStructure();
                initial_timestamp = header.stamp.toSec();
             }
             if(result)
@@ -302,7 +304,7 @@ bool Estimator::initialStructureStereo()
             imu_j++;
             Vector3d pts_j = it_per_frame.point;
             tmp_feature.observation.push_back(make_pair(imu_j, Eigen::Vector2d{pts_j.x(), pts_j.y()}));
-            // tmp_feature.observation_depth.push_back(make_pair(imu_j, it_per_frame.getDepth())); 
+            tmp_feature.observation_depth.push_back(make_pair(imu_j, it_per_frame.getDepth())); 
         }
         sfm_f.push_back(tmp_feature);
     }
@@ -629,7 +631,6 @@ bool Estimator::visualInitialAlignWithDepth()
     f_manager.triangulate(Ps, &(TIC_TMP[0]), &(RIC[0]));
     // f_manager.triangulateWithDepth(Ps, &(TIC_TMP[0]), &(RIC[0]));
 
-
     // do repropagate here
     for (int i = 0; i <= WINDOW_SIZE; i++)
     {
@@ -854,7 +855,7 @@ void Estimator::solveOdometry()
     {
         TicToc t_tri;
         // f_manager.triangulateWithDepth(Ps, tic, ric);
-        // f_manager.triangulateStereo();
+        f_manager.triangulateStereo();
         f_manager.triangulate(Ps, tic, ric);
         ROS_DEBUG("triangulation costs %f", t_tri.toc());
         // optimization();

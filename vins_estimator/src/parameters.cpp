@@ -34,7 +34,7 @@ double ROW, COL;
 double TD, TR;
 double nG = 1.;
 bool g_use_sampson_model = false;
-bool g_use_stereo_correction = false; // false; 
+bool g_use_stereo_correction = true; // false; 
 
 template <typename T>
 T readParam(ros::NodeHandle &n, std::string name)
@@ -62,6 +62,8 @@ void readParameters(ros::NodeHandle &n)
     n.param("use_stereo_correction", g_use_stereo_correction, g_use_stereo_correction);
     ROS_INFO("parameters.cpp: gravity_norm: %lf", nG);
     cout <<"parameters.cpp: "<< (g_use_sampson_model?"Yes use sampson model":"Not use sampson model")<<endl;
+    cout <<"parameters.cpp: "<< (g_use_stereo_correction?"Yes use geometric correction":"Not use geometric correction")<<endl;
+
 
     cv::FileStorage fsSettings(config_file, cv::FileStorage::READ);
     if(!fsSettings.isOpened())
