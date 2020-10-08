@@ -18,6 +18,13 @@
 #include "factor/projection_td_factor.h"
 #include "factor/marginalization_factor.h"
 #include "factor/sampson_factor.h"
+#include "factor/projectionOneFrameTwoCamFactor.h"
+#include "factor/projectionTwoFrameOneCamFactor.h"
+#include "factor/projectionTwoFrameTwoCamFactor.h"
+
+#include "camodocal/camera_models/CameraFactory.h"
+#include "camodocal/camera_models/CataCamera.h"
+#include "camodocal/camera_models/PinholeCamera.h"
 
 #include <unordered_map>
 #include <queue>
@@ -30,6 +37,10 @@ class Estimator
     Estimator();
 
     void setParameter();
+
+    // check stereo visual input 
+    void readIntrinsicParameter(vector<string>& calib_file);
+    bool outlierCheck(int imu_i, int imu_j, Eigen::Vector3d &pts_i, Eigen::Vector3d &pts_j, double inv_dep_i);
 
     // interface
     void processIMU(double t, const Vector3d &linear_acceleration, const Vector3d &angular_velocity);
@@ -49,6 +60,8 @@ class Estimator
     void slideWindowNew();
     void slideWindowOld();
     void optimization();
+    void optimizationStereo();
+    void optimizationStereoWithCorrection();
     void vector2double();
     void double2vector();
     bool failureDetection();
@@ -76,6 +89,7 @@ class Estimator
 
     Matrix3d ric[NUM_OF_CAM];
     Vector3d tic[NUM_OF_CAM];
+    vector<camodocal::CameraPtr> m_camera;
 
     Vector3d Ps[(WINDOW_SIZE + 1)];
     Vector3d Vs[(WINDOW_SIZE + 1)];

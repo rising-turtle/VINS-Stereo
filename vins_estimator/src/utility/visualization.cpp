@@ -170,6 +170,11 @@ void pubOdometry(const Estimator &estimator, const std_msgs::Header &header)
               << estimator.Vs[WINDOW_SIZE].y() << ","
               << estimator.Vs[WINDOW_SIZE].z() << "," << endl;
         foutC.close();
+
+        // long long tmp_t = header.stamp.toSec() * 1e9; 
+        // if(tmp_t == 1520530753301555712) 
+        //    exit(0); 
+
     }
 }
 

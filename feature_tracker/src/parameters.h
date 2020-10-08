@@ -1,6 +1,8 @@
 #pragma once
 #include <ros/ros.h>
 #include <opencv2/highgui/highgui.hpp>
+#include <eigen3/Eigen/Core>
+#include <eigen3/Eigen/Dense>
 
 extern int ROW;
 extern int COL;
@@ -25,5 +27,6 @@ extern int EQUALIZE;
 extern int FISHEYE;
 extern bool PUB_THIS_FRAME;
 extern int FLOW_BACK;
+extern Eigen::Matrix3d E; // essential matrix 
 
 void readParameters(ros::NodeHandle &n);

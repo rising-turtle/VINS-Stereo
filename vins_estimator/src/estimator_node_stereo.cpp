@@ -331,6 +331,12 @@ void process()
             estimator.processImage(image, img_msg->header);
 
             double whole_t = t_s.toc();
+
+            static double total_t = 0; 
+            static int cnt = 0; 
+            total_t += whole_t; 
+            // ROS_INFO("estimator_node_ss: total_t: %lf ms average: %lf ms", total_t, total_t/(++cnt)); 
+
             printStatistics(estimator, whole_t);
             std_msgs::Header header = img_msg->header;
             header.frame_id = "world";
@@ -362,6 +368,8 @@ int main(int argc, char **argv)
     ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug); // Info
     readParameters(n);
     estimator.setParameter();
+    estimator.readIntrinsicParameter(CAM_NAMES); 
+
 #ifdef EIGEN_DONT_PARALLELIZE
     ROS_DEBUG("EIGEN_DONT_PARALLELIZE");
 #endif

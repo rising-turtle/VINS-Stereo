@@ -34,7 +34,7 @@ double ROW, COL;
 double TD, TR;
 double nG = 1.;
 bool g_use_sampson_model = false;
-bool g_use_stereo_correction = true; // false; 
+bool g_use_stereo_correction = false; // false; 
 
 template <typename T>
 T readParam(ros::NodeHandle &n, std::string name)
@@ -59,6 +59,7 @@ void readParameters(ros::NodeHandle &n)
 
     n.param("gravity_norm", nG, nG);
     n.param("use_sampson_model", g_use_sampson_model, g_use_sampson_model);
+    n.param("use_stereo_correction", g_use_stereo_correction, g_use_stereo_correction);
     ROS_INFO("parameters.cpp: gravity_norm: %lf", nG);
     cout <<"parameters.cpp: "<< (g_use_sampson_model?"Yes use sampson model":"Not use sampson model")<<endl;
 

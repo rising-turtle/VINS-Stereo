@@ -37,8 +37,6 @@ double distance(cv::Point2f pt1, cv::Point2f pt2)
     return sqrt(dx * dx + dy * dy);
 }
 
-
-
 FeatureTracker::FeatureTracker()
 {
     stereo_cam = 1;
@@ -57,8 +55,9 @@ void FeatureTracker::setMask()
     // prefer to keep features that are tracked for long time
     vector<pair<int, pair<cv::Point2f, int>>> cnt_pts_id;
 
-    for (unsigned int i = 0; i < cur_pts.size(); i++)
+    for (unsigned int i = 0; i < cur_pts.size(); i++){
         cnt_pts_id.push_back(make_pair(track_cnt[i], make_pair(cur_pts[i], ids[i])));
+    }
 
     sort(cnt_pts_id.begin(), cnt_pts_id.end(), [](const pair<int, pair<cv::Point2f, int>> &a, const pair<int, pair<cv::Point2f, int>> &b)
          {
@@ -114,6 +113,8 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
     }
     cur_pts.clear();
 
+    int opt_flow_w_size = 21;// ;30; // 21; 
+
     if (prev_pts.size() > 0)
     {
         TicToc t_o;
@@ -122,7 +123,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
         if(hasPrediction)
         {
             cur_pts = predict_pts; // use predicted points 
-            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 1, 
+            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 1, 
             cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01), cv::OPTFLOW_USE_INITIAL_FLOW);
             
             int succ_num = 0;
@@ -132,16 +133,17 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
                     succ_num++;
             }
             if (succ_num < 10)
-               cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+               cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
         }
         else
-            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(21, 21), 3);
+            cv::calcOpticalFlowPyrLK(prev_img, cur_img, prev_pts, cur_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
+
         // reverse check
         if(FLOW_BACK)
         {
             vector<uchar> reverse_status;
             vector<cv::Point2f> reverse_pts = prev_pts;
-            cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 1, 
+            cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 1, 
             cv::TermCriteria(cv::TermCriteria::COUNT+cv::TermCriteria::EPS, 30, 0.01), cv::OPTFLOW_USE_INITIAL_FLOW);
             //cv::calcOpticalFlowPyrLK(cur_img, prev_img, cur_pts, reverse_pts, reverse_status, err, cv::Size(21, 21), 3); 
             for(size_t i = 0; i < status.size(); i++)
@@ -161,9 +163,10 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
         reduceVector(prev_pts, status);
         reduceVector(cur_pts, status);
         reduceVector(ids, status );
+        reduceVector(prev_un_pts, status);
         reduceVector(track_cnt, status);
         // ROS_DEBUG("temporal optical flow costs: %fms", t_o.toc());
-        printf("track cnt %d at %lf\n", (int)ids.size(), cur_time);
+        // printf("track cnt %d at %lf\n", (int)ids.size(), cur_time);
     }
 
     for (auto &n : track_cnt)
@@ -171,7 +174,9 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
 
     if (PUB_THIS_FRAME)
     {
+        // ROS_DEBUG("before F, cur_pts.size(): %d", cur_pts.size()); 
         rejectWithF();
+        // ROS_DEBUG("afater F, cur_pts.size(): %d", cur_pts.size()); 
         // ROS_DEBUG("set mask begins");
         TicToc t_m;
         setMask();
@@ -187,18 +192,25 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             if (mask.type() != CV_8UC1)
                 cout << "mask type wrong " << endl;
             cv::goodFeaturesToTrack(cur_img, n_pts, MAX_CNT - cur_pts.size(), 0.01, MIN_DIST, mask);
+
+            // cv::imwrite("mask1.png", mask); 
+            // cout <<" cur_pts.size(): "<<cur_pts.size()<<endl; 
+
         }
         else
             n_pts.clear();
         // ROS_DEBUG("detect feature costs: %f ms", t_t.toc());
+
+        ROS_DEBUG("feature_tracker: detect new %d points", n_pts.size()); 
 
         for (auto &p : n_pts)
         {
             cur_pts.push_back(p);
             ids.push_back(n_id++);
             track_cnt.push_back(1);
+            // cout <<" new_pt: "<<n_id<<" "<<p.x<<" "<<p.y<<endl; 
         }
-        printf("feature cnt after add %d\n", (int)ids.size());
+        // printf("feature cnt after add %d\n", (int)ids.size());
     }
 
     cur_un_pts = undistortedPts(cur_pts, m_camera[0]);
@@ -218,11 +230,11 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             vector<uchar> status, statusRightLeft;
             vector<float> err;
             // cur left ---- cur right
-            cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(21, 21), 3);
+            cv::calcOpticalFlowPyrLK(cur_img, rightImg, cur_pts, cur_right_pts, status, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
             // reverse check cur right ---- cur left
             if(FLOW_BACK)
             {
-                cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err, cv::Size(21, 21), 3);
+                cv::calcOpticalFlowPyrLK(rightImg, cur_img, cur_right_pts, reverseLeftPts, statusRightLeft, err, cv::Size(opt_flow_w_size, opt_flow_w_size), 3);
                 for(size_t i = 0; i < status.size(); i++)
                 {
                     if(status[i] && statusRightLeft[i] && inBorder(cur_right_pts[i]) && distance(cur_pts[i], reverseLeftPts[i]) <= 0.5){
@@ -237,10 +249,76 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
                 }
             }
 
-            ids_right = ids;
+            //fundamental matrix check 
+            
+                vector<cv::Point2f> un_l_pts, un_r_pts; 
+                un_l_pts.reserve(ids.size()); 
+                un_r_pts.reserve(ids.size()); 
 
+                // ofstream ouf("left-right_ori.txt"); 
+                // ofstream ouf2("left-right_lift.txt"); 
+                for(int i=0; i<ids.size(); i++){
+                    if(status[i]){
+                        Eigen::Vector3d tmp_p;
+                        m_camera[0]->liftProjective(Eigen::Vector2d(cur_pts[i].x, cur_pts[i].y), tmp_p);
+                        // ouf2 << i<<" l: "<< tmp_p.transpose()<<" "; 
+                        // tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
+                        // tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
+                        un_l_pts.push_back(cv::Point2f(tmp_p.x(), tmp_p.y())); 
+                        // ouf2<<" proj: "<<tmp_p.x()<<" "<<tmp_p.y()<<" "<<endl; 
+
+                        m_camera[1]->liftProjective(Eigen::Vector2d(cur_right_pts[i].x, cur_right_pts[i].y), tmp_p);
+                        // ouf2 << i<<" r: "<< tmp_p.transpose()<<" "; 
+                        // tmp_p.x() = FOCAL_LENGTH * tmp_p.x() / tmp_p.z() + COL / 2.0;
+                        // tmp_p.y() = FOCAL_LENGTH * tmp_p.y() / tmp_p.z() + ROW / 2.0;
+                        un_r_pts.push_back(cv::Point2f(tmp_p.x(), tmp_p.y()));
+                        // ouf2<<" proj: "<<tmp_p.x()<<" "<<tmp_p.y()<<" "<<endl; 
+                        // ouf<<i<<" "<<cur_pts[i].x<<" "<<cur_pts[i].y<<" "<<cur_right_pts[i].x<<" "<<cur_right_pts[i].y<<endl;
+                    }
+                }
+
+            // use Tlr to to verification 
+
+            ids_right = ids;
             reduceVector(cur_right_pts, status);
             reduceVector(ids_right, status);
+            // ROS_WARN("cur_right_pts.size: %d un_l_pts.size: %d", cur_right_pts.size(), un_l_pts.size());
+            assert(cur_right_pts.size() == un_l_pts.size()); 
+            vector<uchar> lr_fund_status(cur_right_pts.size(), 0); 
+
+            // if(un_l_pts.size() > 10)
+                // cv::findFundamentalMat(un_l_pts, un_r_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, lr_fund_status); 
+            // else
+                // lr_fund_status.resize(un_l_pts.size(), 0);
+
+            int cnt_right_inlier = 0; 
+            for(int i=0; i<lr_fund_status.size(); i++){
+                
+                // check epipilar distance 
+                Vector3d p3d0(un_l_pts[i].x, un_l_pts[i].y, 1.);
+                Vector3d p3d1(un_r_pts[i].x, un_r_pts[i].y, 1.);  
+                const double epipolar_error =
+                std::abs(p3d1.transpose() * E * p3d0);
+                if(epipolar_error < 0.005) // epipolar distance 
+                {
+                    lr_fund_status[i] = 1; 
+                    ++cnt_right_inlier;
+                }
+            }
+
+            reduceVector(cur_right_pts, lr_fund_status);
+            reduceVector(ids_right, lr_fund_status);
+
+            {
+                // for debug 
+                // reduceVector(un_l_pts, lr_fund_status); 
+                // reduceVector(un_r_pts, lr_fund_status);
+                // ofstream ouf("left-right.txt"); 
+                // for(int i=0; i<un_l_pts.size(); i++){
+                //     ouf << un_l_pts[i].x<<" "<<un_l_pts[i].y<<" "<<un_r_pts[i].x<<" "<<un_r_pts[i].y<<endl; 
+                // }
+                // ouf.close(); 
+            }
             // only keep left-right pts
             /*
             reduceVector(cur_pts, status);
@@ -251,8 +329,8 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             */
             cur_un_right_pts = undistortedPts(cur_right_pts, m_camera[1]);
 
-
             right_pts_velocity = ptsVelocity(ids_right, cur_un_right_pts, cur_un_right_pts_map, prev_un_right_pts_map);
+            ROS_WARN("feature_tracker.cpp: found %d inlier stereo matches!", cnt_right_inlier); 
         }
         prev_un_right_pts_map = cur_un_right_pts_map;
     }
@@ -527,9 +605,9 @@ void FeatureTracker::readImage(const cv::Mat &_img, double _cur_time)
 
 void FeatureTracker::rejectWithF()
 {
-     if (cur_pts.size() >= 8)
+    if (cur_pts.size() >= 8)
     {
-        // ROS_DEBUG("FM ransac begins");
+        ROS_DEBUG("FM ransac begins");
         TicToc t_f;
         vector<cv::Point2f> un_cur_pts(cur_pts.size()), un_prev_pts(prev_pts.size());
         for (unsigned int i = 0; i < cur_pts.size(); i++)
@@ -547,6 +625,7 @@ void FeatureTracker::rejectWithF()
         }
 
         vector<uchar> status;
+        // two ways to handle outlier rejection, 
         // cv::findFundamentalMat(un_cur_pts, un_prev_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
         // reduceVector(cur_un_pts, status);
         cv::findFundamentalMat(un_prev_pts, un_cur_pts, cv::FM_RANSAC, F_THRESHOLD, 0.99, status);
@@ -556,8 +635,8 @@ void FeatureTracker::rejectWithF()
         reduceVector(cur_pts, status);
         reduceVector(ids, status);
         reduceVector(track_cnt, status);
-        // ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
-        // ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
+        ROS_DEBUG("FM ransac: %d -> %lu: %f", size_a, cur_pts.size(), 1.0 * cur_pts.size() / size_a);
+        ROS_DEBUG("FM ransac costs: %fms", t_f.toc());
     }
 }
 
