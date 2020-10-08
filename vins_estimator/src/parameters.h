@@ -25,6 +25,8 @@ extern double GYR_N, GYR_W;
 
 extern std::vector<Eigen::Matrix3d> RIC; // Tic 
 extern std::vector<Eigen::Vector3d> TIC;
+extern std::vector<std::string> CAM_NAMES;
+
 extern Eigen::Matrix3d Rlr;     // Tlr 
 extern Eigen::Vector3d Tlr; 
 extern Eigen::Matrix3d Rrl;     // Trl 

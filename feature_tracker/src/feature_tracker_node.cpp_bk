@@ -50,6 +50,7 @@ void img_callback2(const sensor_msgs::ImageConstPtr &img_msg){
 // void img_callback(const sensor_msgs::ImageConstPtr &img_msg)
 void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
 {
+    static int cnt = 0; 
     // ROS_WARN("received img_msg timestamp: %lf", msg_timestamp);
     if(first_image_flag)
     {
@@ -166,17 +167,22 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
                 v_of_point.values.push_back(trackerData.cur_right_pts[j].y);
                 velocity_x_of_point.values.push_back(trackerData.right_pts_velocity[j].x);
                 velocity_y_of_point.values.push_back(trackerData.right_pts_velocity[j].y);
-                // ouf << feature_id<<" right p1: "<<p.x<<" "<<p.y<<" "<<endl; 
             }
         }
-        cout <<" send feature_points after right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
-        ROS_WARN("has published %d feature points", pub_count); 
+
+        // cout <<" send feature_points after right: "<<feature_points->points.size()<<" at "<<std::fixed<<feature_points->header.stamp.toSec()<<endl; 
+        // ROS_WARN("has published %d feature points", pub_count); 
+        
         feature_points->channels.push_back(id_of_point);
         feature_points->channels.push_back(u_of_point);
         feature_points->channels.push_back(v_of_point);
         feature_points->channels.push_back(velocity_x_of_point);
         feature_points->channels.push_back(velocity_y_of_point);
-        // ROS_INFO("publish %f, at %f with %d features ", feature_points->header.stamp.toSec(), ros::Time::now().toSec(),   feature_points->points.size());
+     
+        // static ofstream ouf2("history1.txt"); 
+        ROS_INFO("cnt = %d publish %f, at %f with %d features ", ++cnt, feature_points->header.stamp.toSec(), ros::Time::now().toSec(),   feature_points->points.size());
+        // ouf2<<"cnt = "<<cnt<<" publish "<<feature_points->header.stamp.toSec()<<" with "<<feature_points->points.size()<<" features "<<endl; 
+
         // skip the first image; since no optical speed on frist image
         if (!init_pub)
         {
@@ -185,14 +191,19 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         else
             pub_img.publish(feature_points);
     }
-    ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
+    // ROS_INFO("whole feature tracker processing costs: %f", t_r.toc());
+    static double total_t = 0; 
+    static int t_cnt = 0; 
+    double whole_t = t_r.toc();
+    total_t += whole_t; 
+    // ROS_INFO("feature_tracker_ss: total_t: %lf ms, average: %lf ", total_t, total_t/(++t_cnt)); 
 }
 
 int main(int argc, char **argv)
 {
     ros::init(argc, argv, "feature_tracker_stereo");
     ros::NodeHandle n("~");
-    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Debug); // Debug Info
+    ros::console::set_logger_level(ROSCONSOLE_DEFAULT_NAME, ros::console::levels::Info); // Debug Info
     readParameters(n);
 
     // setup cameras 

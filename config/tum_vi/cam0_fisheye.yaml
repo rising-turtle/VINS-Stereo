@@ -1,0 +1,30 @@
+%YAML:1.0
+---
+model_type: KANNALA_BRANDT
+camera_name: camera
+image_width: 512
+image_height: 512
+projection_parameters:
+   k2: 0.0034823894022493434
+   k3: 0.0007150348452162257
+   k4: -0.0020532361418706202
+   k5: 0.00020293673591811182
+   mu: 190.97847715128717
+   mv: 190.9733070521226
+   u0: 254.93170605935475
+   v0: 256.8974428996504
+
+#### for pose graph node 
+image_topic: "/cam0/image_raw"
+output_path: "/home/davidz/work/result/tum_vi"
+#loop closure parameters
+loop_closure: 0 #1                    # start loop closure
+load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
+fast_relocalization: 1             # useful in real-time and large project
+pose_graph_save_path: "/home/davidz/work/result/pose_graph/" # save and load path
+
+#visualization parameters
+save_image: 1 #1                   # save image in pose graph for visualization prupose; you can close this function by setting 0
+visualize_imu_forward: 0        # output imu forward propogation to achieve low latency and high frequence results
+visualize_camera_size: 0.4      # size of camera marker in RVIZ
+

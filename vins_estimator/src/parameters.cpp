@@ -11,6 +11,7 @@ double GYR_N, GYR_W;
 using namespace std;
 std::vector<Eigen::Matrix3d> RIC;
 std::vector<Eigen::Vector3d> TIC;
+std::vector<std::string> CAM_NAMES;
 
 Eigen::Matrix3d Rrl; 
 Eigen::Vector3d Trl;
@@ -66,6 +67,8 @@ void readParameters(ros::NodeHandle &n)
     {
         std::cerr << "ERROR: Wrong path to settings" << std::endl;
     }
+
+    std::string VINS_FOLDER_PATH = readParam<std::string>(n, "vins_folder");
 
     fsSettings["imu_topic"] >> IMU_TOPIC;
 
@@ -153,6 +156,22 @@ void readParameters(ros::NodeHandle &n)
         ROS_INFO_STREAM("Rrl: " << std::endl << Rrl); 
         ROS_INFO_STREAM("Trl: " << std::endl << Trl.transpose());  
     }
+
+    {
+        // CAM_NAMES.push_back(config_file);
+        std::string cam0Calibfile, cam1Calibfile; 
+        fsSettings["cam0_calib"] >> cam0Calibfile; 
+        fsSettings["cam1_calib"] >> cam1Calibfile; 
+
+        std::string cam0Path = VINS_FOLDER_PATH + "/" + cam0Calibfile; 
+        std::string cam1Path = VINS_FOLDER_PATH + "/" + cam1Calibfile; 
+
+        ROS_DEBUG("cam0Path: %s", cam0Path.c_str()); 
+        ROS_DEBUG("cam1Path: %s", cam1Path.c_str());
+        CAM_NAMES.push_back(cam0Path); 
+        CAM_NAMES.push_back(cam1Path); 
+    }
+
 
     INIT_DEPTH = 15.0;
     BIAS_ACC_THRESHOLD = 0.1;

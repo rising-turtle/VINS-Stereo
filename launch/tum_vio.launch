@@ -1,0 +1,32 @@
+<launch>
+    <arg name="config_path" default = "$(find feature_tracker_stereo)/../config/tum_vi/TUM_512.yaml" />
+	  <arg name="vins_path" default = "$(find feature_tracker_stereo)/../config/tum_vi" />
+      <arg name="cam0_path" default = "$(arg vins_path)/cam0_fisheye.yaml"/>
+
+    <node name="feature_tracker_stereo" pkg="feature_tracker_stereo" type="feature_tracker_stereo" output="screen">
+        <param name="config_file" type="string" value="$(arg config_path)" />
+        <param name="vins_folder" type="string" value="$(arg vins_path)" />
+    </node>
+
+    <node name="vins_estimator_stereo" pkg="vins_estimator_stereo" type="vins_estimator_stereo" output="screen">
+       <param name="config_file" type="string" value="$(arg config_path)" />
+       <param name="vins_folder" type="string" value="$(arg vins_path)" />
+    </node>
+
+    <node name="pose_graph" pkg="pose_graph" type="pose_graph" output="screen">
+        <remap from="/vins_estimator/imu_propagate" to="/vins_estimator_stereo/imu_propagate"/>
+        <remap from="/vins_estimator/odometry" to="/vins_estimator_stereo/odometry"/>
+        <remap from="/vins_estimator/keyframe_pose" to="/vins_estimator_stereo/keyframe_pose"/>
+        <remap from="/vins_estimator/extrinsic" to="/vins_estimator_stereo/extrinsic"/>
+        <remap from="/vins_estimator/keyframe_point" to="/vins_estimator_stereo/keyframe_point"/>
+        <remap from="/vins_estimator/relo_relative_pose" to="/vins_estimator_stereo/relo_relative_pose"/>
+        <param name="config_file" type="string" value="$(arg cam0_path)" />
+        <param name="visualization_shift_x" type="int" value="0" />
+        <param name="visualization_shift_y" type="int" value="0" />
+        <param name="skip_cnt" type="int" value="0" />
+        <param name="skip_dis" type="double" value="0" />
+    </node>
+
+    <include file="vins_rviz.launch"/>
+
+</launch>

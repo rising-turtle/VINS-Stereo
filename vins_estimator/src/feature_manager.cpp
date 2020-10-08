@@ -107,8 +107,8 @@ double FeaturePerFrame::getDepth()
 
     // temporary solution, needs to improve 
     // TODO: update uv and uvRight as well 
-    point = np0 - delta_np0/de; 
-    pointRight = np1 - delta_np1/de; 
+    // point = np0 - delta_np0/de; 
+    // pointRight = np1 - delta_np1/de; 
     point0 = point.head(2); 
     point1 = pointRight.head(2); 
 
