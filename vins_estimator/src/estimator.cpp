@@ -1262,7 +1262,7 @@ void Estimator::optimizationStereoWithCorrection()
     options.trust_region_strategy_type = ceres::DOGLEG;
     options.max_num_iterations = NUM_ITERATIONS;
     options.use_explicit_schur_complement = true;
-    // options.minimizer_progress_to_stdout = true;
+    options.minimizer_progress_to_stdout = g_opt_verbose;
     //options.use_nonmonotonic_steps = true;
     if (marginalization_flag == MARGIN_OLD)
         options.max_solver_time_in_seconds = SOLVER_TIME * 4.0 / 5.0;

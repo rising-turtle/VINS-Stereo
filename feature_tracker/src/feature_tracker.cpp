@@ -330,7 +330,7 @@ void FeatureTracker::trackImage(double _cur_time, const cv::Mat &_img, const cv:
             cur_un_right_pts = undistortedPts(cur_right_pts, m_camera[1]);
 
             right_pts_velocity = ptsVelocity(ids_right, cur_un_right_pts, cur_un_right_pts_map, prev_un_right_pts_map);
-            ROS_WARN("feature_tracker.cpp: found %d inlier stereo matches!", cnt_right_inlier); 
+            ROS_DEBUG("feature_tracker.cpp: found %d inlier stereo matches!", cnt_right_inlier); 
         }
         prev_un_right_pts_map = cur_un_right_pts_map;
     }

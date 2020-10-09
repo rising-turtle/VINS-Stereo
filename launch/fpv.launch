@@ -9,6 +9,8 @@
     </node>
 
     <node name="vins_estimator_stereo" pkg="vins_estimator_stereo" type="vins_estimator_stereo" output="screen">
+       <param name="use_stereo_correction" type="bool" value="true"/>
+       <param name="opt_verbose" type="bool" value="true"/>
        <param name="config_file" type="string" value="$(arg config_path)" />
        <param name="vins_folder" type="string" value="$(arg vins_path)" />
     </node>

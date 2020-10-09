@@ -90,7 +90,7 @@ double FeaturePerFrame::getDepth()
 
     Eigen::Matrix3d R = Rrl.transpose();
     Vector3d h = Trl;  
-    Eigen::Matrix3d G = Utility::skewSymmetric(h); 
+    Eigen::Matrix3d G = Utility::skewSymmetric(h)*R; 
     Eigen::Matrix3d Gt = G.transpose(); 
     Eigen::Matrix3d Pk = Eigen::Matrix3d::Identity(); 
     Pk(2,2) = 0; 
