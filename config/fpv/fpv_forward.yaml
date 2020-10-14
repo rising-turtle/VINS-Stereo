@@ -74,7 +74,7 @@ body_T_cam1: !!opencv-matrix # Timu2c_2, Tc1_2_c2 is a virtual transformation [I
       0,                   0,                   0,   1.0]
 
 #feature traker paprameters
-max_cnt: 300 #250            # max feature number in feature tracking
+max_cnt: 150 # 300 #250            # max feature number in feature tracking
 min_dist: 25            # min distance between two features
 freq: 10 #10                # frequence (Hz) of publish tracking result. At least 10Hz for good estimation. If set 0, the frequence will be same as raw image
 F_threshold: 1.0        # ransac threshold (pixel)

@@ -67,6 +67,10 @@ class Estimator
     bool failureDetection();
 
 
+    void optimizationStereoWithCorrectionDebug(string );
+    void optimizationDebug(string debugfile); 
+
+
     void showStatus();
 
     enum SolverFlag

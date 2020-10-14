@@ -75,6 +75,11 @@ bool ProjectionTwoFrameOneCamFactor::Evaluate(double const *const *parameters, d
     Eigen::Vector3d pts_camera_j = qic.inverse() * (pts_imu_j - tic);
     Eigen::Map<Eigen::Vector2d> residual(residuals);
 
+    // cout<<"pts_i: "<<pts_i.transpose()<<" velocity_i: "<<velocity_i.transpose()<<endl; 
+    // cout<<"td: "<<td<<" td_i: "<<td_i<<endl; 
+    // cout<<"pts_i_td: "<<pts_i_td.transpose()<<" pts_j_td: "<<pts_j_td.transpose()<<endl; 
+    // cout<<"pts_camera_i: "<<pts_camera_i.transpose()<<" pts_camera_j: "<<pts_camera_j.transpose()<<endl; 
+
 #ifdef UNIT_SPHERE_ERROR 
     residual =  tangent_base * (pts_camera_j.normalized() - pts_j_td.normalized());
 #else

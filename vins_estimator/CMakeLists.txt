@@ -62,3 +62,16 @@ add_executable(vins_estimator_stereo
 
 
 target_link_libraries(vins_estimator_stereo ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})
+
+
+add_executable(debug_optimize
+    src/debug_optimize.cpp 
+    src/parameters.cpp
+    src/factor/pose_local_parameterization.cpp
+    src/factor/projectionOneFrameTwoCamFactor.cpp 
+    src/factor/projectionTwoFrameOneCamFactor.cpp
+    src/factor/projectionTwoFrameTwoCamFactor.cpp
+    src/utility/utility.cpp
+    )
+
+target_link_libraries(debug_optimize ${catkin_LIBRARIES} ${OpenCV_LIBS} ${CERES_LIBRARIES})

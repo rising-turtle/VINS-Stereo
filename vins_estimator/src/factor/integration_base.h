@@ -2,9 +2,12 @@
 
 #include "../utility/utility.h"
 #include "../parameters.h"
+#include <iostream>
+#include <fstream>
 
 #include <ceres/ceres.h>
 using namespace Eigen;
+using namespace std; 
 
 class IntegrationBase
 {
@@ -185,11 +188,64 @@ class IntegrationBase
         return residuals;
     }
 
+    void output(ostream& out){
+        out<<dt<<" "<<endl; 
+        out<<acc_0.transpose()<<" "<<gyr_0.transpose()<<endl; 
+        out<<acc_1.transpose()<<" "<<gyr_1.transpose()<<endl; 
+        out<<linearized_acc.transpose()<<" "<<linearized_gyr.transpose()<<endl; 
+        out<<linearized_ba.transpose()<<" "<<linearized_bg.transpose()<<endl; 
+        out<<jacobian<<endl;
+        out<<covariance<<endl; 
+        out<<sum_dt<<" "<<endl; 
+        out<<delta_p.transpose()<<endl; 
+        out<<delta_q.x()<<" "<<delta_q.y()<<" "<<delta_q.z()<<" "<<delta_q.w()<<endl; 
+        out<<delta_v.transpose()<<endl; 
+    }
+
+    void input(istream& in){
+        in >> dt; 
+        for(int i=0; i<3; i++)
+            in >> acc_0(i);
+        for(int i=0; i<3; i++)
+            in >> gyr_0(i);
+        for(int i=0; i<3; i++)
+            in >> acc_1(i);
+        for(int i=0; i<3; i++)
+            in >> gyr_1(i);
+        for(int i=0; i<3; i++)
+            in >> linearized_acc(i);
+        for(int i=0; i<3; i++)
+            in >> linearized_gyr(i);
+        for(int i=0; i<3; i++)
+            in >> linearized_ba(i);
+        for(int i=0; i<3; i++)
+            in >> linearized_bg(i);
+
+        for(int i=0; i<15; i++)
+            for(int j=0; j<15; j++){
+                in >> jacobian(i, j); 
+            }
+        for(int i=0; i<15; i++)
+            for(int j=0; j<15; j++){
+                in >> covariance(i, j); 
+            }
+        in >> sum_dt; 
+        for(int i=0; i<3; i++)
+            in >> delta_p(i);
+        double q[4]; 
+        for(int i=0; i<4; i++)
+            in >> q[i];
+        delta_q = Quaterniond(q[3], q[0], q[1], q[2]); 
+        for(int i=0; i<3; i++)
+            in >> delta_v(i);
+    }
+
     double dt;
     Eigen::Vector3d acc_0, gyr_0;
     Eigen::Vector3d acc_1, gyr_1;
 
-    const Eigen::Vector3d linearized_acc, linearized_gyr;
+    // const Eigen::Vector3d linearized_acc, linearized_gyr;
+    Eigen::Vector3d linearized_acc, linearized_gyr;
     Eigen::Vector3d linearized_ba, linearized_bg;
 
     Eigen::Matrix<double, 15, 15> jacobian, covariance;
