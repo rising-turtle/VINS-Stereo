@@ -16,7 +16,7 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
     if(!gc_succeed)
         return sqrt_info; 
 
-    // Chapter 6 "Statistical Optimization for Geometric Computation"
+    /*// Chapter 6 "Statistical Optimization for Geometric Computation"
     double epsilon = 1.5 / FOCAL_LENGTH; 
     
     Eigen::Matrix3d R = Rrl.transpose();
@@ -36,7 +36,7 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
     cc(1,1) = sqrt(cov(1,1)); 
     cov = epsilon * cc; 
 
-    sqrt_info = cov.inverse();
+    sqrt_info = cov.inverse();*/
     return sqrt_info; 
 }
 
@@ -56,7 +56,7 @@ Eigen::Matrix2d FeaturePerFrame::getOmegaRight() // inverse of covariance matrix
     if(!g_use_stereo_correction)
         return weighting*sqrt_info; 
 
-    // Chapter 6 "Statistical Optimization for Geometric Computation"
+    /*// Chapter 6 "Statistical Optimization for Geometric Computation"
     double epsilon = 1.5 / FOCAL_LENGTH; 
     
     Eigen::Matrix3d R = Rrl.transpose();
@@ -76,7 +76,7 @@ Eigen::Matrix2d FeaturePerFrame::getOmegaRight() // inverse of covariance matrix
     cc(1,1) = sqrt(cov(1,1)); 
     cov = epsilon * cc; 
 
-    sqrt_info = cov.inverse(); 
+    sqrt_info = cov.inverse(); */
     return weighting*sqrt_info; 
 }
 

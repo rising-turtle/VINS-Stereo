@@ -62,15 +62,9 @@ class Estimator
     void optimization();
     void optimizationStereo();
     void optimizationStereoWithCorrection();
-    void optimizationWithCorrection(); 
     void vector2double();
     void double2vector();
     bool failureDetection();
-
-
-    void optimizationStereoWithCorrectionDebug(string );
-    void optimizationDebug(string debugfile); 
-
 
     void showStatus();
 
