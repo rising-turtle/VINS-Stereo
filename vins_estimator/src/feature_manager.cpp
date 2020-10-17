@@ -5,8 +5,6 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
 {
     Eigen::Matrix2d sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
 
-
-
     if(getDepth() <= 0) {
         ROS_ERROR("feature_manager.cpp: something is wrong!"); 
         return sqrt_info; 
@@ -15,11 +13,10 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
     if(!g_use_stereo_correction)
         return sqrt_info; 
 
+    if(!gc_succeed)
+        return sqrt_info; 
 
-    return sqrt_info; 
-
-
-    /*// Chapter 6 "Statistical Optimization for Geometric Computation"
+    // Chapter 6 "Statistical Optimization for Geometric Computation"
     double epsilon = 1.5 / FOCAL_LENGTH; 
     
     Eigen::Matrix3d R = Rrl.transpose();
@@ -39,8 +36,48 @@ Eigen::Matrix2d FeaturePerFrame::getOmega() // inverse of covariance matrix
     cc(1,1) = sqrt(cov(1,1)); 
     cov = epsilon * cc; 
 
+    sqrt_info = cov.inverse();
+    return sqrt_info; 
+}
+
+Eigen::Matrix2d FeaturePerFrame::getOmegaRight() // inverse of covariance matrix
+{
+    Eigen::Matrix2d sqrt_info = FOCAL_LENGTH / 1.5 * Matrix2d::Identity();
+
+    if(getDepth() <= 0) {
+        ROS_ERROR("feature_manager.cpp: something is wrong!"); 
+        return sqrt_info; 
+    }
+
+    double depth = getDepth(); 
+    double weighting = -SQ(depth - 1)/81. + 1.; 
+    if(weighting <0 ) weighting = 0.01;
+
+    if(!g_use_stereo_correction)
+        return weighting*sqrt_info; 
+
+    // Chapter 6 "Statistical Optimization for Geometric Computation"
+    double epsilon = 1.5 / FOCAL_LENGTH; 
+    
+    Eigen::Matrix3d R = Rrl.transpose();
+    Vector3d h = Trl;  
+    Eigen::Matrix3d G = Utility::skewSymmetric(h); 
+    Eigen::Matrix3d Gt = G.transpose(); 
+    Eigen::Matrix3d Pk = Eigen::Matrix3d::Identity(); 
+    Pk(2,2) = 0; 
+    Eigen::Vector3d x1 = Pk*G*pointRight;
+    Eigen::Vector3d x2 = Pk*Gt*point; 
+    Eigen::Matrix3d XX = x2*x2.transpose(); 
+    double de = x1.squaredNorm() + x2.squaredNorm(); 
+    Eigen::Matrix2d XX2 = XX.block<2,2>(0,0)/de; 
+    Eigen::Matrix2d cov = Eigen::Matrix2d::Identity() - XX2; 
+    Eigen::Matrix2d cc = Eigen::Matrix2d::Zero(); 
+    cc(0,0) = sqrt(cov(0,0)); 
+    cc(1,1) = sqrt(cov(1,1)); 
+    cov = epsilon * cc; 
+
     sqrt_info = cov.inverse(); 
-    return sqrt_info; */
+    return weighting*sqrt_info; 
 }
 
 // triangulation to compute depth 
@@ -71,7 +108,8 @@ double FeaturePerFrame::getDepth()
 
     double depth = point3d.z(); 
     // if(depth <= 0.3 || depth >= 7){ // too small or too large depth, not reliable 
-    if(depth <= 0.3){ // barely no object so close to the camera 
+    // TODO: find out optimal threshold for distant point 
+    if(depth <= 1. || depth >= 7.){ // barely no object so close to the camera 
         // ROS_ERROR("feature_manager.cpp: what? depth: %lf", depth); 
         // cout<<"feature_id: "<< feat_id <<"point0: "<<point0.transpose()<<" point1: "<<point1.transpose()<<" point3d: "<<point3d.transpose()<<endl;
         is_stereo = false; 
@@ -79,6 +117,34 @@ double FeaturePerFrame::getDepth()
 
         return -1; 
     }
+
+    // check reprojection error 
+    Eigen::Vector3d proj_pt0, proj_pt1; 
+    proj_pt0 = point3d / depth; 
+    proj_pt1 = Rrl * point3d + Trl; 
+    if(proj_pt1.z()<= 1.){
+        is_stereo = false; 
+        dpt = -1; 
+        return -1; 
+    }
+    proj_pt1 = proj_pt1/proj_pt1.z(); 
+
+    Eigen::Vector2d err_pt0 = proj_pt0.head(2) - point0; 
+    Eigen::Vector2d err_pt1 = proj_pt1.head(2) - point1; 
+
+    double ep0_norm = err_pt0.norm(); 
+    double ep1_norm = err_pt1.norm(); 
+
+    if((err_pt0.norm() > 2./FOCAL_LENGTH) || (err_pt1.norm() > 2./FOCAL_LENGTH)){
+        is_stereo = false; 
+        dpt = -1; 
+   
+        // for debug 
+        // static int cnt =0; 
+        // ROS_ERROR("really, we have %d wrong triangulations err_pt0: %lf  err_pt1: %lf", ++cnt, err_pt0.norm(), err_pt1.norm()); 
+        return - 1; 
+    }
+
     dpt = depth; 
 
     if(!g_use_stereo_correction) // don't apply geometric correction 
@@ -107,14 +173,39 @@ double FeaturePerFrame::getDepth()
 
     // temporary solution, needs to improve 
     // TODO: update uv and uvRight as well 
-    point = np0 - delta_np0/de; 
-    pointRight = np1 - delta_np1/de; 
-    point0 = point.head(2); 
-    point1 = pointRight.head(2); 
+
+    Vector3d new_p0 = np0 - delta_np0/de; 
+    Vector3d new_p1 = np1 - delta_np1/de; 
+
+    point0 = new_p0.head(2); 
+    point1 = new_p1.head(2); 
 
     ((FeatureManager*)0)->triangulatePoint(leftPose, rightPose, point0, point1, point3d); 
-    depth = point3d.z(); 
+    
+    // check reprojection error 
+    proj_pt0 = point3d / point3d.z(); 
+    proj_pt1 = Rrl * point3d + Trl; 
+    if(proj_pt1.z()<= 1.){
+        is_stereo = false; 
+        dpt = -1; 
+        return -1; 
+    }
+    proj_pt1 = proj_pt1/proj_pt1.z(); 
 
+    err_pt0 = proj_pt0.head(2) - point0; 
+    err_pt1 = proj_pt1.head(2) - point1; 
+    double new_ep0_norm = err_pt0.norm();
+    double new_ep1_norm = err_pt1.norm(); 
+    if(new_ep0_norm > ep0_norm || new_ep1_norm > ep1_norm){
+        gc_succeed = false; 
+        return depth ; 
+    }
+
+    point = new_p0; 
+    pointRight = new_p1; 
+    depth = point3d.z(); 
+    dpt = depth; 
+    gc_succeed = true; 
     return depth; 
 }
 

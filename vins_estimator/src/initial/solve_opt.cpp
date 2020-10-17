@@ -37,6 +37,7 @@ bool OptSolver::solveTCeres(const vector<pair<Vector3d, Vector3d>> &corres, cons
 
     problem.AddParameterBlock(para_T[0], 3); 
 
+ 
     Matrix3d cov_pti = Matrix3d::Identity(); 
 
     double ceres_sum_err = 0; 
@@ -49,7 +50,12 @@ bool OptSolver::solveTCeres(const vector<pair<Vector3d, Vector3d>> &corres, cons
     	pti.y() *= pti.z();
     	Vector2d ptj_n(ptj(0), ptj(1)); 
 
-    	TranslateFactor *f = new TranslateFactor(Rji, pti, ptj_n, cov_pti); 
+    	double depth = pti.z(); 
+    	double weight = (depth - 1)*(depth-1)/8.1; 
+
+    	Matrix3d cov_pti_ext = cov_pti*weight; 
+
+    	TranslateFactor *f = new TranslateFactor(Rji, pti, ptj_n, cov_pti_ext); 
 
     	ceres::ResidualBlockId fid = problem.AddResidualBlock(f, loss_function, para_T[0]); 
     }

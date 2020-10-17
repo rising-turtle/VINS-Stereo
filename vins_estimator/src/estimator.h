@@ -62,6 +62,7 @@ class Estimator
     void optimization();
     void optimizationStereo();
     void optimizationStereoWithCorrection();
+    void optimizationWithCorrection(); 
     void vector2double();
     void double2vector();
     bool failureDetection();

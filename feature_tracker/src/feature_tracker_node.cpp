@@ -180,7 +180,7 @@ void handle_stereo_image(cv::Mat& img1, cv::Mat& img2, double msg_timestamp)
         feature_points->channels.push_back(velocity_y_of_point);
      
         // static ofstream ouf2("history1.txt"); 
-        ROS_INFO("cnt = %d publish %f, at %f with %d features ", ++cnt, feature_points->header.stamp.toSec(), ros::Time::now().toSec(),   feature_points->points.size());
+        ROS_INFO("cnt = %d publish %lf with %d features ", ++cnt, feature_points->header.stamp.toSec(), feature_points->points.size());
         // ouf2<<"cnt = "<<cnt<<" publish "<<feature_points->header.stamp.toSec()<<" with "<<feature_points->points.size()<<" features "<<endl; 
 
         // skip the first image; since no optical speed on frist image

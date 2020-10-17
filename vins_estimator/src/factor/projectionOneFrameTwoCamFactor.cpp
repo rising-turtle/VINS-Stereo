@@ -11,7 +11,7 @@
 
 #include "projectionOneFrameTwoCamFactor.h"
 
-Eigen::Matrix2d ProjectionOneFrameTwoCamFactor::sqrt_info;
+// Eigen::Matrix2d ProjectionOneFrameTwoCamFactor::sqrt_info;
 double ProjectionOneFrameTwoCamFactor::sum_t;
 
 ProjectionOneFrameTwoCamFactor::ProjectionOneFrameTwoCamFactor(const Eigen::Vector3d &_pts_i, const Eigen::Vector3d &_pts_j,
@@ -26,6 +26,7 @@ ProjectionOneFrameTwoCamFactor::ProjectionOneFrameTwoCamFactor(const Eigen::Vect
     velocity_j.x() = _velocity_j.x();
     velocity_j.y() = _velocity_j.y();
     velocity_j.z() = 0;
+    sqrt_info = FOCAL_LENGTH / 1.5 * Eigen::Matrix2d::Identity();
 #ifdef UNIT_SPHERE_ERROR
     Eigen::Vector3d b1, b2;
     Eigen::Vector3d a = pts_j.normalized();
@@ -38,6 +39,11 @@ ProjectionOneFrameTwoCamFactor::ProjectionOneFrameTwoCamFactor(const Eigen::Vect
     tangent_base.block<1, 3>(1, 0) = b2.transpose();
 #endif
 };
+
+
+void ProjectionOneFrameTwoCamFactor::setInfoMatrix(Eigen::Matrix2d& OMEGA){
+    sqrt_info = OMEGA ; 
+}
 
 bool ProjectionOneFrameTwoCamFactor::debug(double const *const *parameters, double *residuals, double **jacobians) const
 {

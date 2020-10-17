@@ -36,6 +36,7 @@ class FeaturePerFrame
         cur_td = td;
         is_stereo = false;
         dpt = -1; 
+        gc_succeed =false; 
     }
     void rightObservation(const Eigen::Matrix<double, 7, 1> &_point)
     {
@@ -57,11 +58,13 @@ class FeaturePerFrame
     double getDepth(); 
 
     Eigen::Matrix2d getOmega(); // inverse of covariance matrix
+    Eigen::Matrix2d getOmegaRight(); // weighted inverse of covariance matrix
 
     void print(){
         printf("point: %f %f %f uv: %f %f \n", point.x(), point.y(), point.z(), uv.x(), uv.y());
     }
     double cur_td;
+    bool gc_succeed; 
     Vector3d point, pointRight;
     Vector3d ori_point, ori_pointRight; 
     Vector2d uv, uvRight;
