@@ -22,3 +22,7 @@ alt="UTH-FPV Dataset" width="240" height="180" border="10" /></a>
 
 More details can be found in the report https://fpv.ifi.uzh.ch/wp-content/uploads/sourcenova/uni-comp/2019-2020-uzh-fpv-benchmark/submissions/15/details.pdf
 
+# TODO:
+Need to reduce the feature tracking drift to obtain more accurate feature matches between the stereo image pairs, as suggested in "A Comparative Analysis of Tightly-coupled Monocular, Binocular, and Stereo VINS".    
+One promising solution is to replace FAST+KLT frontend with LIBVISO, an accurate dense stereo tracking method "StereoScan: Dense 3D Reconstruction in Real-time". 
+... 
