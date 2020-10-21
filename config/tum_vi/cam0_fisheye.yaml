@@ -18,7 +18,7 @@ projection_parameters:
 image_topic: "/cam0/image_raw"
 output_path: "/home/davidz/work/result/tum_vi"
 #loop closure parameters
-loop_closure: 0 #1                    # start loop closure
+loop_closure: 1 #1                    # start loop closure
 load_previous_pose_graph: 0        # load and reuse previous pose graph; load from 'pose_graph_save_path'
 fast_relocalization: 1             # useful in real-time and large project
 pose_graph_save_path: "/home/davidz/work/result/pose_graph/" # save and load path
